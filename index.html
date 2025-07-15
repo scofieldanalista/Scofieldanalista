@@ -85,6 +85,8 @@
   .status {
     font-size: 0.9em;
     color: #aaa;
+    min-height: 1.2em;
+    margin-top: 0.4em;
   }
 
   /* Layout pedras manual */
@@ -325,6 +327,7 @@
       btnErrou.disabled = true;
       outputEl.textContent = '';
       statusEl.textContent = 'Dados limpos.';
+      statusEl.style.color = '#eee';
     }
   }
 
@@ -333,7 +336,32 @@
     return `soma:${estrat.soma};intervaloSeg:${estrat.intervaloSeg};cores:${estrat.cores.join(',')}`;
   }
 
-  // Analisar histórico e gerar estratégias
+  // Função para gerar estratégias com base no histórico
+  function gerarEstrategias() {
+    estrategias = [];
+    for(let i=0; i<historicoDados.length - 2; i++) {
+      const anterior = historicoDados[i];
+      const branco = historicoDados[i+1];
+      const posterior = historicoDados[i+2];
+      if(branco.cor !== 'branco') continue;
+
+      const soma = (anterior.numero ?? 0) + (posterior.numero ?? 0);
+      const intervaloSeg = (posterior.horario - branco.horario) / 1000;
+      const cores = [anterior.cor, branco.cor, posterior.cor];
+      const id = criarIdEstrategia({ soma, intervaloSeg, cores });
+
+      estrategias.push({
+        id,
+        soma,
+        intervaloSeg,
+        cores,
+        peso: pesosEstrategias[id] ?? 1
+      });
+    }
+    salvarEstrategias();
+  }
+
+  // Analisar histórico e gerar estratégias + mostrar mensagem verde de sucesso
   function analisarHistorico() {
     outputEl.textContent = 'Analisando histórico...';
     const linhas = historicoEl.value.split('\n');
@@ -346,4 +374,138 @@
       outputEl.textContent = 'Erro: histórico inválido ou incompleto (mínimo 3 linhas).';
       return;
     }
-    historico
+    historicoDados = dados;
+    gerarEstrategias();
+
+    // Mensagem de sucesso em verde
+    statusEl.textContent = '✔ Histórico analisado com sucesso!';
+    statusEl.style.color = '#2ecc71'; // verde
+
+    // Limpar a mensagem após 5 segundos
+    setTimeout(() => {
+      statusEl.textContent = '';
+      statusEl.style.color = '#aaa';
+    }, 5000);
+
+    outputEl.textContent = 'Histórico processado. Estratégias criadas: ' + estrategias.length;
+  }
+
+  // Analisar sinal manual para tentar prever próximo branco
+  function analisarSinalManual() {
+    outputEl.textContent = 'Analisando sinal manual...';
+    btnAcertou.disabled = true;
+    btnErrou.disabled = true;
+
+    const antNum = parseInt(manualAnteriorNum.value, 10);
+    const antTime = parseHorario(manualAnteriorTime.value);
+    const brTime = parseHorario(manualBrancoTime.value);
+    const posNum = parseInt(manualPosteriorNum.value, 10);
+    const posTime = parseHorario(manualPosteriorTime.value);
+
+    if (
+      isNaN(antNum) || !antTime ||
+      !brTime ||
+      isNaN(posNum) || !posTime
+    ) {
+      outputEl.textContent = 'Preencha todos os campos corretamente para o sinal manual.';
+      return;
+    }
+
+    // Criar dados do sinal manual
+    const sinalManual = {
+      anterior: { numero: antNum, horario: antTime },
+      branco: { horario: brTime },
+      posterior: { numero: posNum, horario: posTime }
+    };
+
+    // Gerar soma e intervalo
+    const somaManual = antNum + posNum;
+    const intervaloSegManual = (posTime - brTime) / 1000;
+    const coresManual = ['preto', 'branco', 'vermelho']; // cores fixas na interface, pode ajustar depois
+
+    // Tentar encontrar estratégia similar com maior peso
+    let melhorEstrat = null;
+    for(let e of estrategias) {
+      // Critérios simples de comparação (você pode melhorar aqui)
+      if(
+        Math.abs(e.soma - somaManual) <= 2 &&
+        Math.abs(e.intervaloSeg - intervaloSegManual) <= 10
+      ) {
+        if(!melhorEstrat || e.peso > melhorEstrat.peso) {
+          melhorEstrat = e;
+        }
+      }
+    }
+
+    if(!melhorEstrat){
+      outputEl.textContent = 'Nenhuma estratégia similar encontrada para este sinal manual.';
+      btnAcertou.disabled = true;
+      btnErrou.disabled = true;
+      ultimoResultado = null;
+      return;
+    }
+
+    // Exibir resultado
+    outputEl.innerHTML = `Estratégia detectada:<br>
+      Soma anterior+posterior: <b>${melhorEstrat.soma}</b><br>
+      Intervalo segundos: <b>${melhorEstrat.intervaloSeg.toFixed(1)}</b><br>
+      Cores: <b>${melhorEstrat.cores.join(', ')}</b><br>
+      Peso: <b>${melhorEstrat.peso.toFixed(2)}</b><br>
+      <br>
+      <span style="color:${melhorEstrat.peso >= 1.5 ? '#e74c3c' : '#f39c12'}; font-weight:bold;">
+        ${melhorEstrat.peso >= 1.5 ? 'SINAL FORTE' : 'SINAL FRACO'}
+      </span>`;
+
+    ultimoResultado = melhorEstrat;
+    btnAcertou.disabled = false;
+    btnErrou.disabled = false;
+  }
+
+  // Botão acertou
+  function sinalAcertou() {
+    if(!ultimoResultado) return;
+    const id = ultimoResultado.id;
+    pesosEstrategias[id] = (pesosEstrategias[id] ?? 1) + 0.2;
+    salvarEstrategias();
+    statusEl.textContent = '👍 Estratégia reforçada (Acertou).';
+    statusEl.style.color = '#2ecc71';
+    btnAcertou.disabled = true;
+    btnErrou.disabled = true;
+    setTimeout(() => {
+      statusEl.textContent = '';
+      statusEl.style.color = '#aaa';
+    }, 4000);
+  }
+
+  // Botão errou
+  function sinalErrou() {
+    if(!ultimoResultado) return;
+    const id = ultimoResultado.id;
+    pesosEstrategias[id] = (pesosEstrategias[id] ?? 1) - 0.3;
+    if(pesosEstrategias[id] < 0.2) pesosEstrategias[id] = 0.2; // não deixa ficar negativo
+    salvarEstrategias();
+    statusEl.textContent = '⚠️ Estratégia enfraquecida (Errou).';
+    statusEl.style.color = '#e74c3c';
+    btnAcertou.disabled = true;
+    btnErrou.disabled = true;
+    setTimeout(() => {
+      statusEl.textContent = '';
+      statusEl.style.color = '#aaa';
+    }, 4000);
+  }
+
+  // Eventos
+  btnAnalisarHistorico.onclick = analisarHistorico;
+  btnLimparTudo.onclick = limparTudo;
+  btnAnalisarSinal.onclick = analisarSinalManual;
+  btnAcertou.onclick = sinalAcertou;
+  btnErrou.onclick = sinalErrou;
+
+  // Ao carregar a página, tentar carregar estratégias
+  carregarEstrategias();
+
+})();
+</script>
+</main>
+</body>
+</html>
