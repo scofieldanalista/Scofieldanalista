@@ -3,147 +3,313 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Scofield Analista</title>
+<title>Scofield Analista - Previsão Branco Blaze</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #111;
+    background: #121212;
     color: #eee;
-    padding: 10px;
+    margin: 0; padding: 20px;
   }
-  textarea {
+  h1 {
+    color: #f44336;
+    text-align: center;
+  }
+  textarea, input {
     width: 100%;
-    height: 200px;
-    background: #222;
-    color: #eee;
-    border: none;
     padding: 10px;
-    resize: vertical;
-    font-family: monospace;
+    margin-top: 10px;
+    font-size: 1em;
+    border-radius: 5px;
+    border: none;
+    outline: none;
   }
   button {
-    margin-top: 10px;
-    padding: 10px 20px;
-    font-weight: bold;
-    background: #090;
+    background: #f44336;
     color: white;
     border: none;
-    cursor: pointer;
-  }
-  #msg {
+    padding: 12px 20px;
     margin-top: 10px;
-    color: #0f0;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+  }
+  button:hover {
+    background: #d32f2f;
+  }
+  .history-block {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+    background: #222;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+  }
+  .entry {
+    padding: 4px 6px;
+    margin-bottom: 2px;
+    border-radius: 3px;
+  }
+  .red {
+    background-color: #b71c1c;
+  }
+  .black {
+    background-color: #212121;
+  }
+  .white {
+    background-color: #eee;
+    color: #111;
     font-weight: bold;
   }
-  .resultado {
-    margin-top: 20px;
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
   }
-  .pedra {
-    display: inline-block;
-    width: 30px;
-    height: 30px;
-    margin-right: 5px;
-    border-radius: 50%;
+  .input-group {
+    flex: 1;
   }
-  .vermelho {
-    background: #f33;
-    border: 2px solid #a00;
+  label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
   }
-  .preto {
-    background: #222;
-    border: 2px solid #555;
+  .prediction {
+    margin-top: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
   }
-  .branco {
-    background: #eee;
-    border: 2px solid #ccc;
+  .alert {
+    color: #f44336;
+    font-weight: bold;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink {
+    0%, 100% {opacity:1;}
+    50% {opacity:0.3;}
+  }
+  .buttons-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .buttons-row button {
+    flex: 1;
   }
 </style>
 </head>
 <body>
 
-<h1>Scofield Analista</h1>
+<h1>Scofield Analista - Previsão Branco Blaze</h1>
 
-<textarea id="historico" placeholder="Cole o histórico aqui, ex:&#10;15/07/2025 19:14:55&#10;8&#10;19:14:55&#10;..."></textarea>
-<button id="btnAnalisar">Analisar Histórico</button>
-<div id="msg"></div>
+<label for="historyInput">Cole o histórico completo (data, número, horário):</label>
+<textarea id="historyInput" rows="10" placeholder="Cole aqui o histórico conforme exemplo..."></textarea>
+<button id="loadHistoryBtn">Carregar Histórico e Analisar</button>
 
-<div id="resultados" class="resultado"></div>
+<div class="history-block" id="historyDisplay"></div>
+
+<hr />
+
+<h2>Inserção Manual de Pedras</h2>
+<div class="input-row">
+  <div class="input-group">
+    <label for="prevNumber">Pedra Anterior (Número):</label>
+    <input type="number" id="prevNumber" min="1" max="14" placeholder="Número 1-14" />
+  </div>
+  <div class="input-group">
+    <label for="prevTime">Horário Pedra Anterior (HH:MM:SS):</label>
+    <input type="time" id="prevTime" step="1" placeholder="HH:MM:SS" />
+  </div>
+</div>
+<div class="input-row">
+  <div class="input-group">
+    <label for="whiteTime">Horário Branco (HH:MM:SS):</label>
+    <input type="time" id="whiteTime" step="1" placeholder="HH:MM:SS" />
+  </div>
+  <div class="input-group">
+    <label for="nextNumber">Pedra Posterior (Número):</label>
+    <input type="number" id="nextNumber" min="1" max="14" placeholder="Número 1-14" />
+  </div>
+  <div class="input-group">
+    <label for="nextTime">Horário Pedra Posterior (HH:MM:SS):</label>
+    <input type="time" id="nextTime" step="1" placeholder="HH:MM:SS" />
+  </div>
+</div>
+
+<button id="analyzeManualBtn">Analisar Manualmente</button>
+
+<div class="prediction" id="predictionText"></div>
+
+<div class="buttons-row">
+  <button id="btnHit">Acertou</button>
+  <button id="btnMiss">Errou</button>
+</div>
 
 <script>
-const vermelhos = new Set(['1','2','3','4','5','6','7']);
-const pretos = new Set(['8','9','11','12','13','14']);
+// Configuração: quais números são vermelhos e pretos
+const RED_NUMS = new Set([1,2,3,4,5,6,7]);
+const BLACK_NUMS = new Set([8,9,11,12,13,14]);
 
-function parseHistorico(text) {
-  // O histórico esperado tem linhas triplas: data, número da pedra, horário
-  // Exemplo: 15/07/2025 19:14:55 \n 8 \n 19:14:55
-  const linhas = text.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  if (linhas.length < 3) {
-    throw new Error('Histórico inválido ou incompleto (mínimo 3 linhas).');
-  }
-  if (linhas.length % 3 !== 0) {
-    throw new Error('Formato inválido: número de linhas deve ser múltiplo de 3.');
-  }
-  const dados = [];
-  for(let i=0; i<linhas.length; i+=3) {
-    const data = linhas[i];
-    const numeroPedra = linhas[i+1];
-    const horario = linhas[i+2];
+// Armazenamento local
+const STORAGE_HISTORY_KEY = 'scofield_history';
+const STORAGE_STRATEGIES_KEY = 'scofield_strategies';
+const STORAGE_LEARNING_KEY = 'scofield_learning';
 
-    // Detectar cor pela pedra
-    let cor = '';
-    if (vermelhos.has(numeroPedra)) {
-      cor = 'vermelho';
-    } else if (pretos.has(numeroPedra)) {
-      cor = 'preto';
+// Estado do app
+let historyData = [];
+let strategies = [];
+let learning = {
+  hits: 0,
+  misses: 0
+};
+
+const historyInput = document.getElementById('historyInput');
+const loadHistoryBtn = document.getElementById('loadHistoryBtn');
+const historyDisplay = document.getElementById('historyDisplay');
+
+const prevNumberInput = document.getElementById('prevNumber');
+const prevTimeInput = document.getElementById('prevTime');
+const whiteTimeInput = document.getElementById('whiteTime');
+const nextNumberInput = document.getElementById('nextNumber');
+const nextTimeInput = document.getElementById('nextTime');
+
+const analyzeManualBtn = document.getElementById('analyzeManualBtn');
+const predictionText = document.getElementById('predictionText');
+
+const btnHit = document.getElementById('btnHit');
+const btnMiss = document.getElementById('btnMiss');
+
+function saveToStorage() {
+  localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(historyData));
+  localStorage.setItem(STORAGE_STRATEGIES_KEY, JSON.stringify(strategies));
+  localStorage.setItem(STORAGE_LEARNING_KEY, JSON.stringify(learning));
+}
+function loadFromStorage() {
+  const h = localStorage.getItem(STORAGE_HISTORY_KEY);
+  const s = localStorage.getItem(STORAGE_STRATEGIES_KEY);
+  const l = localStorage.getItem(STORAGE_LEARNING_KEY);
+  if(h) historyData = JSON.parse(h);
+  if(s) strategies = JSON.parse(s);
+  if(l) learning = JSON.parse(l);
+}
+loadFromStorage();
+
+function parseHistory(text) {
+  // O formato esperado é:
+  // Linha 1: data e hora completa ou só data (ex: 15/07/2025 19:14:55)
+  // Linha 2: número da pedra (1-14) OU vazio para branco
+  // Linha 3: horário (HH:MM:SS)
+  // Repetir...
+
+  const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let parsed = [];
+  for(let i=0; i < lines.length; i+=3){
+    if(i+2 >= lines.length) break;
+    const fullDate = lines[i];
+    const numLine = lines[i+1];
+    const timeLine = lines[i+2];
+    let number = null;
+    if(numLine !== '') number = Number(numLine);
+    // Identificar cor
+    let color = null;
+    if(number === null) {
+      color = 'white';
+    } else if(RED_NUMS.has(number)) {
+      color = 'red';
+    } else if(BLACK_NUMS.has(number)) {
+      color = 'black';
     } else {
-      // Se o número não está em nenhuma lista, pode ser branco ou inválido
-      // Como não há número para branco, vamos considerar branco se numeroPedra vazio ou não numérico
-      if (!numeroPedra || isNaN(numeroPedra)) {
-        cor = 'branco';
-      } else {
-        // Pode ser branco ou erro, mas para evitar erro vamos assumir branco
-        cor = 'branco';
-      }
+      color = 'unknown';
     }
-
-    dados.push({
-      data,
-      numeroPedra,
-      horario,
-      cor
+    parsed.push({
+      fullDate,
+      number,
+      time: timeLine,
+      color
     });
   }
-  return dados;
+  return parsed;
 }
 
-function mostrarResultados(dados) {
-  const div = document.getElementById('resultados');
-  div.innerHTML = '';
-
-  dados.forEach((item, idx) => {
-    const p = document.createElement('p');
-    p.textContent = `${item.data} ${item.horario} - Pedra: ${item.numeroPedra} Cor: ${item.cor.toUpperCase()}`;
-    const spanCor = document.createElement('span');
-    spanCor.className = `pedra ${item.cor}`;
-    p.prepend(spanCor);
-    div.appendChild(p);
-  });
-}
-
-document.getElementById('btnAnalisar').addEventListener('click', () => {
-  const texto = document.getElementById('historico').value;
-  const msg = document.getElementById('msg');
-  try {
-    const dados = parseHistorico(texto);
-    mostrarResultados(dados);
-    msg.textContent = 'Histórico analisado com sucesso!';
-    msg.style.color = '#0f0';
-  } catch(e) {
-    msg.textContent = 'Erro: ' + e.message;
-    msg.style.color = '#f33';
+function displayHistory() {
+  if(historyData.length === 0){
+    historyDisplay.innerHTML = 'Nenhum histórico carregado.';
+    return;
   }
-});
-</script>
+  let html = '';
+  historyData.forEach(entry => {
+    let classColor = entry.color === 'red' ? 'red' : (entry.color === 'black' ? 'black' : 'white');
+    html += `<div class="entry ${classColor}">${entry.time} - Pedra: ${entry.number !== null ? entry.number : 'BRANCO'}</div>`;
+  });
+  historyDisplay.innerHTML = html;
+}
 
-</body>
-</html>
+function analyzeHistory() {
+  // Aqui você pode implementar suas estratégias para detectar padrões e brancos futuros.
+  // Exemplo simples: procurar sequências onde o branco apareceu após certas combinações.
+  // Para simplificar, vamos só mostrar quantos brancos existem no histórico.
+
+  const brancos = historyData.filter(e => e.color === 'white');
+  return brancos.length;
+}
+
+function addStrategy(strategy) {
+  strategies.push(strategy);
+  saveToStorage();
+}
+
+function analyzeManualInput() {
+  const prevNum = Number(prevNumberInput.value);
+  const prevTime = prevTimeInput.value;
+  const whiteTime = whiteTimeInput.value;
+  const nextNum = Number(nextNumberInput.value);
+  const nextTime = nextTimeInput.value;
+
+  if(!prevNum || !prevTime || !whiteTime || !nextNum || !nextTime){
+    alert('Por favor, preencha todos os campos de inserção manual.');
+    return;
+  }
+  if(prevNum < 1 || prevNum > 14 || nextNum < 1 || nextNum > 14){
+    alert('Números de pedra devem estar entre 1 e 14.');
+    return;
+  }
+
+  // Criar objeto manual de análise
+  const manualEntry = {
+    prevNum, prevTime, whiteTime, nextNum, nextTime
+  };
+
+  // Aqui a lógica para verificar se esse padrão já existe nas estratégias
+  // ou salvar como nova estratégia de aprendizado
+  // Para simplificar, vamos salvar a estratégia baseada nessa entrada manual:
+
+  addStrategy(manualEntry);
+
+  predictionText.textContent = 'Estratégia manual salva! Agora aguarde novas previsões.';
+
+  saveToStorage();
+}
+
+function predictNextWhite() {
+  // Exemplo básico de previsão baseado nas estratégias armazenadas e histórico
+  if(strategies.length === 0) {
+    predictionText.textContent = 'Nenhuma estratégia salva para previsão.';
+    return;
+  }
+  // Para demonstrar, vamos pegar a última estratégia e sugerir o próximo branco no horário + 1 min
+  const lastStrategy = strategies[strategies.length -1];
+  // Parse tempo para minutos e segundos
+  const parts = lastStrategy.whiteTime.split(':');
+  if(parts.length < 3) {
+    predictionText.textContent = 'Formato horário inválido na última estratégia.';
+    return;
+  }
+  let h = parseInt(parts[0],10);
+  let m = parseInt(parts[1],10);
+  let s = parseInt(parts[2],10);
+
+  s += 30; // Previs
