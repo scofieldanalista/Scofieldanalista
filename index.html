@@ -1,177 +1,78 @@
-<script>
-  const app = document.getElementById('app');
-  const resultados = JSON.parse(localStorage.getItem('resultados') || '[]');
-  const feedbacks = JSON.parse(localStorage.getItem('feedbacks') || '{}');
-  let ultimoPrevisto = null;
-
-  function horaParaMinutos(hora) {
-    const [h, m] = hora.split(':').map(Number);
-    return h * 60 + m;
+function analisar() {
+  if (resultados.length < 1) {
+    alert('Salve pelo menos 1 resultado para começar a análise.');
+    return;
   }
 
-  function minutosParaHora(minutos) {
-    const h = String(Math.floor(minutos / 60)).padStart(2, '0');
-    const m = String(minutos % 60).padStart(2, '0');
-    return `${h}:${m}`;
+  const brancos = resultados
+    .map(r => horaParaMinutos(r.meio.horario))
+    .filter(v => v !== null)
+    .sort((a, b) => a - b);
+
+  if (brancos.length === 0) {
+    alert('Nenhum horário válido do branco encontrado para análise.');
+    return;
   }
 
-  function salvarResultado(esq, meio, dir) {
-    if (!esq.numero || !esq.horario || !dir.numero || !dir.horario || !meio.horario) {
-      alert('Preencha todos os números e horários, exceto o branco que não tem número.');
-      return;
+  const ultimoBranco = brancos[brancos.length - 1];
+  let mediaIntervalo = 6;
+
+  if (brancos.length >= 2) {
+    const intervalos = [];
+    for (let i = 1; i < brancos.length; i++) {
+      intervalos.push(brancos[i] - brancos[i - 1]);
     }
-    resultados.push({ esq, meio, dir });
-    localStorage.setItem('resultados', JSON.stringify(resultados));
-    atualizarLog();
-    alert('Resultado salvo com sucesso!');
+    mediaIntervalo = intervalos.reduce((a, b) => a + b, 0) / intervalos.length;
   }
 
-  function atualizarLog() {
-    const logDiv = document.getElementById('log');
-    if (resultados.length === 0) {
-      logDiv.innerHTML = 'Nenhum resultado salvo ainda.';
-      return;
-    }
-    logDiv.innerHTML = resultados.map((r, i) => {
-      let feedback = feedbacks[i];
-      let emoji = feedback === 'acerto' ? '✅' : feedback === 'erro' ? '❌' : '';
-      return `${i + 1}. ${r.esq.cor} ${r.esq.numero} ${r.esq.horario} | 🎲 ${r.meio.horario} | ${r.dir.cor} ${r.dir.numero} ${r.dir.horario} ${emoji}`;
-    }).join('<br>');
-  }
+  const previsto = Math.round(ultimoBranco + mediaIntervalo);
+  const previstoHora = minutosParaHora(previsto);
+  ultimoPrevisto = previsto;
 
-  function calcularConfiança(media, intervalos, brancos) {
-    if (brancos.length < 2) {
-      return { text: "⚠️ Poucos dados — sinal arriscado", color: "#f39c12" };
-    } else if (media <= 4) {
-      return { text: "✅ Sinal forte — branco provável", color: "#2ecc71" };
+  document.getElementById('resultado').textContent = `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${previstoHora} — PREPARA!`;
+
+  const conf = calcularConfiança(mediaIntervalo, [], brancos);
+  document.getElementById('confiança').textContent = conf.text;
+  document.getElementById('confiança').style.color = conf.color;
+
+  // Detecção de chuva de brancos:
+  // Conta quantos brancos saíram nos últimos 5 minutos antes do último branco
+  let chuvaCount = 0;
+  for (let i = brancos.length - 1; i >= 0; i--) {
+    if (ultimoBranco - brancos[i] <= 5) {
+      chuvaCount++;
     } else {
-      return { text: "⚠️ Sinal moderado — use cautela", color: "#f1c40f" };
+      break;
     }
   }
 
-  function analisar() {
-    if (resultados.length < 1) {
-      alert('Salve pelo menos 1 resultado para começar a análise.');
-      return;
-    }
+  if (chuvaCount >= 2) {
+    document.getElementById('avisos').innerHTML = `<span style="color: #3498db; font-weight:bold;">☔️ CHUVA DE BRANCOS DETECTADA: ${chuvaCount} brancos nos últimos 5 minutos!</span>`;
+  } else {
+    document.getElementById('avisos').innerHTML = '';
+  }
 
-    const brancos = resultados
-      .map(r => horaParaMinutos(r.meio.horario))
-      .filter(v => v !== null)
-      .sort((a, b) => a - b);
-
-    if (brancos.length === 0) {
-      alert('Nenhum horário válido do branco encontrado para análise.');
-      return;
-    }
-
-    const ultimoBranco = brancos[brancos.length - 1];
-    let mediaIntervalo = 6;
-
-    if (brancos.length >= 2) {
-      const intervalos = [];
-      for (let i = 1; i < brancos.length; i++) {
-        intervalos.push(brancos[i] - brancos[i - 1]);
-      }
-      mediaIntervalo = intervalos.reduce((a, b) => a + b, 0) / intervalos.length;
-    }
-
-    const previsto = Math.round(ultimoBranco + mediaIntervalo);
-    const previstoHora = minutosParaHora(previsto);
-    ultimoPrevisto = previsto;
-
-    document.getElementById('resultado').textContent = `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${previstoHora} — PREPARA!`;
-
-    const conf = calcularConfiança(mediaIntervalo, [], brancos);
-    document.getElementById('confiança').textContent = conf.text;
-    document.getElementById('confiança').style.color = conf.color;
-
-    // Mostrar botões de feedback
-    document.getElementById('avisos').innerHTML = `
+  // Botões feedback como antes:
+  document.getElementById('avisos').innerHTML += `
+    <div style="margin-top:10px;">
       <button id="btnAcertou" style="margin-right:10px;">✅ Acertou</button>
       <button id="btnErrou">❌ Errou</button>
-    `;
+    </div>
+  `;
 
-    document.getElementById('btnAcertou').onclick = () => {
-      feedbacks[resultados.length - 1] = 'acerto';
-      localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
-      alert('Feedback de ACERTO registrado!');
-      atualizarLog();
-      document.getElementById('avisos').innerHTML = '';
-    };
-
-    document.getElementById('btnErrou').onclick = () => {
-      feedbacks[resultados.length - 1] = 'erro';
-      localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
-      alert('Feedback de ERRO registrado!');
-      atualizarLog();
-      document.getElementById('avisos').innerHTML = '';
-    };
-  }
-
-  function limparHistorico() {
-    if (!confirm('Tem certeza que deseja limpar todo o histórico?')) return;
-    localStorage.removeItem('resultados');
-    localStorage.removeItem('feedbacks');
-    resultados.length = 0;
-    for (const key in feedbacks) delete feedbacks[key];
+  document.getElementById('btnAcertou').onclick = () => {
+    feedbacks[resultados.length - 1] = 'acerto';
+    localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+    alert('Feedback de ACERTO registrado!');
     atualizarLog();
-    document.getElementById('resultado').textContent = '';
-    document.getElementById('confiança').textContent = '';
-    document.getElementById('avisos').textContent = '';
-  }
+    document.getElementById('avisos').innerHTML = '';
+  };
 
-  function criarInterface() {
-    app.innerHTML = `
-      <div class="container">
-        <div class="pedra">
-          <div contenteditable class="cor-quadrado" id="corEsq" title="Clique para mudar cor">🔴</div>
-          <label>Número</label>
-          <input type="number" id="numEsq" />
-          <label>Horário</label>
-          <input type="time" id="horaEsq" />
-        </div>
-        <div class="pedra">
-          <div class="cor-quadrado" id="corMeio" title="Branco - não tem número">🎲</div>
-          <label>Horário</label>
-          <input type="time" id="horaMeio" />
-        </div>
-        <div class="pedra">
-          <div contenteditable class="cor-quadrado" id="corDir" title="Clique para mudar cor">⚫</div>
-          <label>Número</label>
-          <input type="number" id="numDir" />
-          <label>Horário</label>
-          <input type="time" id="horaDir" />
-        </div>
-      </div>
-      <button onclick="salvarResultado(
-        {cor: document.getElementById('corEsq').textContent.trim(), numero: document.getElementById('numEsq').value.trim(), horario: document.getElementById('horaEsq').value},
-        {horario: document.getElementById('horaMeio').value},
-        {cor: document.getElementById('corDir').textContent.trim(), numero: document.getElementById('numDir').value.trim(), horario: document.getElementById('horaDir').value}
-      )">Salvar Resultado</button>
-      <button onclick="analisar()">Analisar</button>
-      <button onclick="limparHistorico()">Limpar Histórico</button>
-      <div id="resultado"></div>
-      <div id="confiança"></div>
-      <div id="avisos"></div>
-      <div id="log"></div>
-    `;
-
-    function toggleCor(element) {
-      const cores = ['🔴', '⚫', '⚪'];
-      let atual = element.textContent.trim();
-      let index = cores.indexOf(atual);
-      index = (index + 1) % cores.length;
-      element.textContent = cores[index];
-    }
-
-    document.getElementById('corEsq').addEventListener('click', e => toggleCor(e.target));
-    document.getElementById('corDir').addEventListener('click', e => toggleCor(e.target));
-
+  document.getElementById('btnErrou').onclick = () => {
+    feedbacks[resultados.length - 1] = 'erro';
+    localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+    alert('Feedback de ERRO registrado!');
     atualizarLog();
-  }
-
-  criarInterface();
-</script>
-</body>
-</html>
+    document.getElementById('avisos').innerHTML = '';
+  };
+}
