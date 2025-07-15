@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Scofield Analista</title>
+  <title>Scofield Analista Avançado</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,6 +12,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 100vh;
     }
     h1 {
       margin-bottom: 20px;
@@ -22,26 +23,28 @@
       margin-bottom: 20px;
     }
     .pedra {
-      width: 120px;
-      height: 160px;
+      width: 130px;
+      height: 170px;
       border: 3px solid #999;
-      border-radius: 12px;
+      border-radius: 14px;
       text-align: center;
       padding: 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      user-select: none;
     }
     .quadrado-cor {
       width: 100%;
-      height: 120px;
-      border-radius: 12px;
+      height: 130px;
+      border-radius: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 70px;
       color: white;
+      user-select: none;
     }
     .vermelho { background-color: #c0392b; }
     .preto { background-color: #000; }
@@ -51,67 +54,95 @@
       position: relative;
     }
     .blaze-logo {
-      width: 60px;
-      height: 60px;
+      width: 65px;
+      height: 65px;
       margin: auto;
       background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Blaze_logo.svg/512px-Blaze_logo.svg.png') no-repeat center center;
       background-size: contain;
+      pointer-events: none;
     }
     label {
       font-weight: bold;
-      font-size: 14px;
+      font-size: 15px;
       margin-top: 5px;
+      user-select: none;
     }
     input[type=number], input[type=time] {
       width: 100%;
-      font-size: 16px;
-      padding: 4px;
-      border-radius: 6px;
+      font-size: 17px;
+      padding: 5px;
+      border-radius: 7px;
       border: 1.5px solid #888;
       text-align: center;
+      user-select: text;
     }
     button {
-      padding: 12px 30px;
-      font-size: 18px;
+      padding: 14px 32px;
+      font-size: 19px;
       border: none;
       background-color: #c0392b;
       color: white;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
-      margin-top: 10px;
-      margin-right: 10px;
+      margin-top: 12px;
+      margin-right: 12px;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #e74c3c;
     }
     #log {
-      max-height: 260px;
+      max-height: 300px;
       overflow-y: auto;
       width: 100%;
-      max-width: 600px;
-      background: #eee;
-      padding: 15px;
-      border-radius: 12px;
+      max-width: 660px;
+      background: #f0f0f0;
+      padding: 18px;
+      border-radius: 14px;
       font-size: 16px;
-      margin-top: 25px;
+      margin-top: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      user-select: none;
     }
     .log-item {
-      margin-bottom: 12px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 8px;
     }
     #resultado {
-      margin-top: 20px;
-      font-weight: bold;
-      font-size: 18px;
-      color: #c0392b;
-      max-width: 600px;
+      margin-top: 28px;
+      font-weight: 700;
+      font-size: 22px;
+      color: #d63031;
+      max-width: 660px;
       text-align: center;
+      user-select: none;
+    }
+    #status {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 20px;
+      user-select: none;
+    }
+    #status.forte {
+      color: #27ae60;
+    }
+    #status.arriscado {
+      color: #f39c12;
+    }
+    #status.fraco {
+      color: #7f8c8d;
     }
   </style>
 </head>
 <body>
 
-  <h1>Scofield Analista</h1>
+  <h1>Scofield Analista Avançado</h1>
 
   <div class="container">
     <div class="pedra" id="pedra-esq">
-      <div class="quadrado-cor vermelho" id="cor-esq">🔴</div>
+      <div class="quadrado-cor vermelho" id="cor-esq" title="Clique para mudar a cor">🔴</div>
       <label for="num-esq">Número</label>
       <input type="number" id="num-esq" min="0" max="14" />
       <label for="hora-esq">Horário</label>
@@ -119,7 +150,7 @@
     </div>
 
     <div class="pedra" id="pedra-meio">
-      <div class="quadrado-cor branco" id="cor-meio">
+      <div class="quadrado-cor branco" id="cor-meio" title="Branco (Blaze)">
         <div class="blaze-logo"></div>
       </div>
       <label for="hora-meio">Horário Branco</label>
@@ -127,7 +158,7 @@
     </div>
 
     <div class="pedra" id="pedra-dir">
-      <div class="quadrado-cor vermelho" id="cor-dir">🔴</div>
+      <div class="quadrado-cor vermelho" id="cor-dir" title="Clique para mudar a cor">🔴</div>
       <label for="num-dir">Número</label>
       <input type="number" id="num-dir" min="0" max="14" />
       <label for="hora-dir">Horário</label>
@@ -142,6 +173,7 @@
   </div>
 
   <div id="resultado"></div>
+  <div id="status"></div>
   <div id="log"></div>
 
   <script>
@@ -193,6 +225,8 @@
       atualizaLog();
       limpaFormulario();
       document.getElementById('resultado').textContent = '';
+      document.getElementById('status').textContent = '';
+      document.getElementById('status').className = '';
     }
 
     function atualizaLog() {
@@ -258,22 +292,37 @@
       return soma / (brancos.length -1);
     }
 
-    function preverProximoBranco() {
-      const media = mediaIntervaloBrancos();
-      if(media === null) return 'Dados insuficientes.';
-      const ultBranco = horaParaMinutos(resultados[resultados.length -1].meio.horario);
-      const previsto = Math.round(ultBranco + media);
-      return `Próximo branco provável por volta das ${minutosParaHora(previsto)}`;
-    }
+    // Nova função para calcular confiança da previsão
+    function calcularConfianca(resultado) {
+      // Soma dos números das pedras ao redor do branco
+      const somaNums = resultado.esquerda.numero + resultado.direita.numero;
 
-    function playAlerta() {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.7);
+      // Peso da soma dos números (máximo 40 pontos)
+      let ptsSoma = Math.min(somaNums * 2, 40); // Limite 40 pontos
+
+      // Detecta se o padrão atual é duplo, dentado ou banguela (0 a 30 pontos)
+      let ptsPadrao = 0;
+      const ultimo = resultados[resultados.length - 1];
+      if(resultados.length >= 2) {
+        const penultimo = resultados[resultados.length - 2];
+        const diff = horaParaMinutos(ultimo.meio.horario) - horaParaMinutos(penultimo.meio.horario);
+        if(diff === 1) ptsPadrao = 30;      // Duplo: pontuação máxima
+        else if(diff === 2) ptsPadrao = 20; // Dentado: pontuação média
+        else if(diff <= 4) ptsPadrao = 10;  // Banguela: pontuação menor
+      }
+
+      // Peso baseado na regularidade dos intervalos (0 a 30 pontos)
+      const media = mediaIntervaloBrancos();
+      let ptsIntervalo = 0;
+      if(media !== null) {
+        const diffAtual = horaParaMinutos(resultado.meio.horario) - horaParaMinutos(resultados[resultados.length - 2]?.meio.horario || resultado.meio.horario);
+        const difAbs = Math.abs(diffAtual - media);
+        ptsIntervalo = Math.max(0, 30 - difAbs * 10); // Penaliza muito se estiver longe da média
+      }
+
+      // Total pontuação até 100 pontos
+      const total = ptsSoma + ptsPadrao + ptsIntervalo;
+      return Math.min(total, 100);
     }
 
     function analisarDados() {
@@ -283,33 +332,78 @@
       }
 
       const padroes = detectarPadroesBranco();
-      const previsao = preverProximoBranco();
-      const resultadoDiv = document.getElementById('resultado');
+      const previsaoText = preverProximoBranco();
 
-      let horaAlvo = previsao.match(/\d{2}:\d{2}/);
+      // Calcula confiança do último resultado
+      const confianca = calcularConfianca(resultados[resultados.length - 1]);
+
+      // Define status textual e visual baseado na confiança
+      let statusTexto = '';
+      let statusClass = '';
+      if(confianca >= 75) {
+        statusTexto = 'FORTE — Prepare-se!';
+        statusClass = 'forte';
+        playAlerta();
+      } else if(confianca >= 40) {
+        statusTexto = 'ARRISCADO — Fique atento.';
+        statusClass = 'arriscado';
+      } else {
+        statusTexto = 'FRACO — Baixa confiança.';
+        statusClass = 'fraco';
+      }
+
+      // Extrai horário previsto do texto para mensagem principal
+      let horaAlvo = previsaoText.match(/\d{2}:\d{2}/);
       let frase = horaAlvo
         ? `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${horaAlvo[0]} — PREPARA!`
-        : previsao;
+        : previsaoText;
 
-      let html = `<div style="font-size: 20px; color: #d63031; margin-bottom: 10px;">${frase}</div>`;
+      // Monta resultado visual
+      let html = `<div style="font-size: 22px; color: #d63031; margin-bottom: 12px;">${frase}</div>`;
       if(padroes.length) {
         html += '<strong>Padrões detectados:</strong><br>' + padroes.join('<br>');
-        playAlerta();
       } else {
         html += '<br><em>Nenhum padrão especial detectado.</em>';
       }
 
-      resultadoDiv.innerHTML = html;
+      document.getElementById('resultado').innerHTML = html;
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = statusTexto;
+      statusDiv.className = statusClass;
+    }
+
+    function preverProximoBranco() {
+      const media = mediaIntervaloBrancos();
+      if(media === null) return 'Dados insuficientes para previsão.';
+      const ultBranco = horaParaMinutos(resultados[resultados.length - 1].meio.horario);
+      const previsto = Math.round(ultBranco + media);
+      return `Próximo branco provável por volta das ${minutosParaHora(previsto)}`;
+    }
+
+    function playAlerta() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(660, ctx.currentTime);
+        osc.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.7);
+      } catch {
+        // Caso navegador bloqueie áudio
+      }
     }
 
     document.getElementById('btn-salvar').addEventListener('click', salvaResultado);
     document.getElementById('btn-analisar').addEventListener('click', analisarDados);
     document.getElementById('btn-limpar').addEventListener('click', () => {
-      if(confirm("Tem certeza que quer apagar tudo?")) {
+      if(confirm("Tem certeza que quer apagar todo o histórico?")) {
         resultados = [];
         localStorage.removeItem('resultados');
         atualizaLog();
         document.getElementById('resultado').textContent = '';
+        document.getElementById('status').textContent = '';
+        document.getElementById('status').className = '';
       }
     });
 
