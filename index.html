@@ -3,384 +3,146 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Scofield Analista - Plano Sombra</title>
+<title>Scofield Analista</title>
 <style>
   body {
-    background: #121212;
+    font-family: Arial, sans-serif;
+    background: #111;
     color: #eee;
-    font-family: 'Consolas', monospace;
-    margin: 0; padding: 1rem;
+    padding: 10px;
   }
-  textarea, input {
-    font-family: monospace;
-    font-size: 1rem;
-    margin: 0.3rem 0;
+  textarea {
     width: 100%;
-    box-sizing: border-box;
+    height: 200px;
+    background: #222;
+    color: #eee;
+    border: none;
+    padding: 10px;
+    resize: vertical;
+    font-family: monospace;
   }
   button {
-    background: #e74c3c;
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-weight: bold;
+    background: #090;
+    color: white;
     border: none;
-    color: white;
-    padding: 0.5rem 1rem;
-    font-weight: bold;
     cursor: pointer;
-    margin: 0.3rem 0.1rem;
-    border-radius: 4px;
   }
-  button:disabled {
-    background: #555;
-    cursor: not-allowed;
-  }
-  .status {
-    margin-top: 0.5rem;
+  #msg {
+    margin-top: 10px;
+    color: #0f0;
     font-weight: bold;
-  }
-  .quadrados {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 1rem;
-  }
-  .quadrado {
-    width: 80px;
-    height: 80px;
-    border-radius: 12px;
-    color: white;
-    font-size: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .preto { background: #222; }
-  .vermelho { background: #c0392b; }
-  .branco {
-    background: #ddd;
-    color: #333;
-    font-size: 3.5rem;
-    font-weight: bold;
-  }
-  label {
-    display: block;
-    margin-top: 0.6rem;
   }
   .resultado {
-    margin-top: 1rem;
+    margin-top: 20px;
+  }
+  .pedra {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    margin-right: 5px;
+    border-radius: 50%;
+  }
+  .vermelho {
+    background: #f33;
+    border: 2px solid #a00;
+  }
+  .preto {
     background: #222;
-    padding: 1rem;
-    border-radius: 8px;
-    min-height: 80px;
-    white-space: pre-wrap;
+    border: 2px solid #555;
+  }
+  .branco {
+    background: #eee;
+    border: 2px solid #ccc;
   }
 </style>
 </head>
 <body>
 
-<h2>Scofield Analista - Plano Sombra</h2>
+<h1>Scofield Analista</h1>
 
-<label for="inputHistorico">Cole aqui o histórico (formato TipMiner):</label>
-<textarea id="inputHistorico" rows="10" placeholder="15/07/2025 19:14:55 — ⚫️ 8
-15/07/2025 19:14:25 — 🔴 10
-15/07/2025 19:13:55 — ⚪️
-..."></textarea>
-<button id="btnAnalisarHistorico">Analisar Histórico</button>
-<div id="statusHistorico" class="status"></div>
+<textarea id="historico" placeholder="Cole o histórico aqui, ex:&#10;15/07/2025 19:14:55&#10;8&#10;19:14:55&#10;..."></textarea>
+<button id="btnAnalisar">Analisar Histórico</button>
+<div id="msg"></div>
 
-<div class="quadrados" style="margin-top:1rem;">
-  <div class="quadrado preto" id="corAnterior">⚫️</div>
-  <div class="quadrado branco" id="corBranco">🎲</div>
-  <div class="quadrado vermelho" id="corPosterior">🔴</div>
-</div>
-
-<div style="display:flex; gap:1rem; margin-top:0.5rem;">
-  <div style="flex:1;">
-    <label>Pedra Anterior - Número:</label>
-    <input type="number" id="inputNumAnterior" min="0" max="50" />
-    <label>Horário (HH:mm:ss):</label>
-    <input type="text" id="inputHoraAnterior" placeholder="19:14:55" />
-  </div>
-  <div style="flex:1;">
-    <label>Branco - Horário (HH:mm:ss):</label>
-    <input type="text" id="inputHoraBranco" placeholder="19:14:55" />
-  </div>
-  <div style="flex:1;">
-    <label>Pedra Posterior - Número:</label>
-    <input type="number" id="inputNumPosterior" min="0" max="50" />
-    <label>Horário (HH:mm:ss):</label>
-    <input type="text" id="inputHoraPosterior" placeholder="19:14:55" />
-  </div>
-</div>
-
-<button id="btnAnalisarSinal" style="margin-top: 1rem;">Analisar Sinal Manual</button>
-
-<div id="resultado" class="resultado"></div>
-
-<div style="margin-top: 1rem;">
-  <button id="btnAcertou" disabled>Acertou 👍</button>
-  <button id="btnErrou" disabled>Errou ⚠️</button>
-  <button id="btnLimparTudo">Limpar Tudo</button>
-</div>
-
-<div id="statusGeral" class="status"></div>
+<div id="resultados" class="resultado"></div>
 
 <script>
-(() => {
-  // Variáveis
-  let estrategias = [];
-  let pesosEstrategias = {};
-  let ultimoResultado = null;
+const vermelhos = new Set(['1','2','3','4','5','6','7']);
+const pretos = new Set(['8','9','11','12','13','14']);
 
-  // Elementos DOM
-  const inputHistorico = document.getElementById('inputHistorico');
-  const btnAnalisarHistorico = document.getElementById('btnAnalisarHistorico');
-  const statusHistorico = document.getElementById('statusHistorico');
-  const resultadoEl = document.getElementById('resultado');
-  const btnAnalisarSinal = document.getElementById('btnAnalisarSinal');
-  const btnAcertou = document.getElementById('btnAcertou');
-  const btnErrou = document.getElementById('btnErrou');
-  const btnLimparTudo = document.getElementById('btnLimparTudo');
-  const statusGeral = document.getElementById('statusGeral');
-
-  // Parse horário HH:mm:ss para Date
-  function parseHorario(hhmmss) {
-    if (!hhmmss) return null;
-    const now = new Date();
-    const [h,m,s] = hhmmss.split(':').map(x => parseInt(x));
-    if ([h,m,s].some(isNaN)) return null;
-    now.setHours(h, m, s, 0);
-    return now;
+function parseHistorico(text) {
+  // O histórico esperado tem linhas triplas: data, número da pedra, horário
+  // Exemplo: 15/07/2025 19:14:55 \n 8 \n 19:14:55
+  const linhas = text.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (linhas.length < 3) {
+    throw new Error('Histórico inválido ou incompleto (mínimo 3 linhas).');
   }
+  if (linhas.length % 3 !== 0) {
+    throw new Error('Formato inválido: número de linhas deve ser múltiplo de 3.');
+  }
+  const dados = [];
+  for(let i=0; i<linhas.length; i+=3) {
+    const data = linhas[i];
+    const numeroPedra = linhas[i+1];
+    const horario = linhas[i+2];
 
-  // Parse histórico TipMiner formatado "15/07/2025 19:14:55 — ⚫️ 8"
-  function parseHistoricoTipMiner(texto) {
-    const linhas = texto.split('\n');
-    const pedras = [];
-
-    for (const linha of linhas) {
-      if (!linha.trim()) continue;
-      if (!linha.includes(' — ')) continue;
-
-      const [dataHoraStr, corNumStr] = linha.split(' — ');
-      if (!dataHoraStr || !corNumStr) continue;
-
-      // Extrai data e hora
-      // Exemplo: "15/07/2025 19:14:55"
-      // Convertendo para Date (UTC local)
-      const dtParts = dataHoraStr.trim().split(' ');
-      if (dtParts.length !== 2) continue;
-      const [dataStr, horaStr] = dtParts;
-
-      // Converte data para formato ISO yyyy-MM-dd
-      const [dia, mes, ano] = dataStr.split('/');
-      if (!dia || !mes || !ano) continue;
-      const dataISO = `${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}T${horaStr}`;
-
-      // Cria objeto Date
-      const dt = new Date(dataISO);
-
-      // Determina cor e número
-      let cor = null;
-      let numero = null;
-      if (corNumStr.startsWith('⚫️')) {
-        cor = 'preto';
-        numero = parseInt(corNumStr.slice(2).trim());
-      } else if (corNumStr.startsWith('🔴')) {
-        cor = 'vermelho';
-        numero = parseInt(corNumStr.slice(2).trim());
-      } else if (corNumStr.startsWith('⚪️')) {
+    // Detectar cor pela pedra
+    let cor = '';
+    if (vermelhos.has(numeroPedra)) {
+      cor = 'vermelho';
+    } else if (pretos.has(numeroPedra)) {
+      cor = 'preto';
+    } else {
+      // Se o número não está em nenhuma lista, pode ser branco ou inválido
+      // Como não há número para branco, vamos considerar branco se numeroPedra vazio ou não numérico
+      if (!numeroPedra || isNaN(numeroPedra)) {
         cor = 'branco';
-        numero = null;
       } else {
-        continue;
-      }
-
-      pedras.push({
-        dataHora: dt,
-        cor,
-        numero
-      });
-    }
-    return pedras;
-  }
-
-  // Salvar estratégias no localStorage
-  function salvarEstrategias() {
-    localStorage.setItem('estrategias', JSON.stringify(estrategias));
-    localStorage.setItem('pesosEstrategias', JSON.stringify(pesosEstrategias));
-  }
-
-  // Carregar estratégias do localStorage
-  function carregarEstrategias() {
-    const estStr = localStorage.getItem('estrategias');
-    const pesosStr = localStorage.getItem('pesosEstrategias');
-    estrategias = estStr ? JSON.parse(estStr) : [];
-    pesosEstrategias = pesosStr ? JSON.parse(pesosStr) : {};
-  }
-
-  // Criar estratégias baseadas nas pedras (soma anterior+posterior, intervalo, cores)
-  function criarEstrategias(pedras) {
-    estrategias = [];
-    // Vamos analisar brancos e suas pedras anterior e posterior
-    for (let i = 1; i < pedras.length - 1; i++) {
-      if (pedras[i].cor === 'branco') {
-        const anterior = pedras[i-1];
-        const posterior = pedras[i+1];
-        if (!anterior || !posterior) continue;
-        if (anterior.numero == null || posterior.numero == null) continue;
-
-        const soma = anterior.numero + posterior.numero;
-        const intervaloSeg = (posterior.dataHora - pedras[i].dataHora) / 1000;
-
-        estrategias.push({
-          id: estrategias.length,
-          soma,
-          intervaloSeg,
-          cores: [anterior.cor, 'branco', posterior.cor],
-          peso: pesosEstrategias[estrategias.length] ?? 1
-        });
-      }
-    }
-    salvarEstrategias();
-  }
-
-  // Analisar histórico
-  function analisarHistorico() {
-    const texto = inputHistorico.value.trim();
-    if (!texto) {
-      statusHistorico.textContent = '⚠️ Cole o histórico primeiro.';
-      statusHistorico.style.color = '#e74c3c';
-      return;
-    }
-    const pedras = parseHistoricoTipMiner(texto);
-    if (pedras.length < 3) {
-      statusHistorico.textContent = '⚠️ Histórico inválido ou incompleto (mínimo 3 linhas válidas).';
-      statusHistorico.style.color = '#e74c3c';
-      return;
-    }
-
-    criarEstrategias(pedras);
-    statusHistorico.textContent = '✅ Histórico analisado com sucesso!';
-    statusHistorico.style.color = '#2ecc71';
-    resultadoEl.textContent = `Estratégias criadas: ${estrategias.length}`;
-    ultimoResultado = null;
-    btnAcertou.disabled = true;
-    btnErrou.disabled = true;
-  }
-
-  // Analisar sinal manual
-  function analisarSinalManual() {
-    const antNum = parseInt(document.getElementById('inputNumAnterior').value);
-    const antHora = document.getElementById('inputHoraAnterior').value.trim();
-    const brHora = document.getElementById('inputHoraBranco').value.trim();
-    const posNum = parseInt(document.getElementById('inputNumPosterior').value);
-    const posHora = document.getElementById('inputHoraPosterior').value.trim();
-
-    if (isNaN(antNum) || !antHora || !brHora || isNaN(posNum) || !posHora) {
-      resultadoEl.textContent = '⚠️ Preencha todos os campos do sinal manual.';
-      return;
-    }
-
-    const antDt = parseHorario(antHora);
-    const brDt = parseHorario(brHora);
-    const posDt = parseHorario(posHora);
-    if (!antDt || !brDt || !posDt) {
-      resultadoEl.textContent = '⚠️ Horários inválidos (use HH:mm:ss).';
-      return;
-    }
-
-    const somaManual = antNum + posNum;
-    const intervaloSegManual = (posDt - brDt) / 1000;
-
-    let melhorEstrat = null;
-    for (let e of estrategias) {
-      if (
-        Math.abs(e.soma - somaManual) <= 2 &&
-        Math.abs(e.intervaloSeg - intervaloSegManual) <= 10
-      ) {
-        if (!melhorEstrat || e.peso > melhorEstrat.peso) {
-          melhorEstrat = e;
-        }
+        // Pode ser branco ou erro, mas para evitar erro vamos assumir branco
+        cor = 'branco';
       }
     }
 
-    if (!melhorEstrat) {
-      resultadoEl.textContent = 'Nenhuma estratégia similar encontrada para este sinal manual.';
-      btnAcertou.disabled = true;
-      btnErrou.disabled = true;
-      ultimoResultado = null;
-      return;
-    }
-
-    resultadoEl.innerHTML = `Estratégia detectada:<br>
-      Soma anterior+posterior: <b>${melhorEstrat.soma}</b><br>
-      Intervalo segundos: <b>${melhorEstrat.intervaloSeg.toFixed(1)}</b><br>
-      Peso: <b>${melhorEstrat.peso.toFixed(2)}</b><br>
-      <br>
-      <span style="color:${melhorEstrat.peso >= 1.5 ? '#e74c3c' : '#f39c12'}; font-weight:bold;">
-        ${melhorEstrat.peso >= 1.5 ? 'SINAL FORTE' : 'SINAL FRACO'}
-      </span>`;
-
-    ultimoResultado = melhorEstrat;
-    btnAcertou.disabled = false;
-    btnErrou.disabled = false;
+    dados.push({
+      data,
+      numeroPedra,
+      horario,
+      cor
+    });
   }
+  return dados;
+}
 
-  // Botão acertou
-  function sinalAcertou() {
-    if (!ultimoResultado) return;
-    const id = ultimoResultado.id;
-    pesosEstrategias[id] = (pesosEstrategias[id] ?? 1) + 0.2;
-    salvarEstrategias();
-    statusGeral.textContent = '👍 Estratégia reforçada (Acertou).';
-    statusGeral.style.color = '#2ecc71';
-    btnAcertou.disabled = true;
-    btnErrou.disabled = true;
-    setTimeout(() => {
-      statusGeral.textContent = '';
-    }, 4000);
+function mostrarResultados(dados) {
+  const div = document.getElementById('resultados');
+  div.innerHTML = '';
+
+  dados.forEach((item, idx) => {
+    const p = document.createElement('p');
+    p.textContent = `${item.data} ${item.horario} - Pedra: ${item.numeroPedra} Cor: ${item.cor.toUpperCase()}`;
+    const spanCor = document.createElement('span');
+    spanCor.className = `pedra ${item.cor}`;
+    p.prepend(spanCor);
+    div.appendChild(p);
+  });
+}
+
+document.getElementById('btnAnalisar').addEventListener('click', () => {
+  const texto = document.getElementById('historico').value;
+  const msg = document.getElementById('msg');
+  try {
+    const dados = parseHistorico(texto);
+    mostrarResultados(dados);
+    msg.textContent = 'Histórico analisado com sucesso!';
+    msg.style.color = '#0f0';
+  } catch(e) {
+    msg.textContent = 'Erro: ' + e.message;
+    msg.style.color = '#f33';
   }
-
-  // Botão errou
-  function sinalErrou() {
-    if (!ultimoResultado) return;
-    const id = ultimoResultado.id;
-    pesosEstrategias[id] = (pesosEstrategias[id] ?? 1) - 0.3;
-    if (pesosEstrategias[id] < 0.2) pesosEstrategias[id] = 0.2;
-    salvarEstrategias();
-    statusGeral.textContent = '⚠️ Estratégia enfraquecida (Errou).';
-    statusGeral.style.color = '#e74c3c';
-    btnAcertou.disabled = true;
-    btnErrou.disabled = true;
-    setTimeout(() => {
-      statusGeral.textContent = '';
-    }, 4000);
-  }
-
-  // Botão limpar tudo
-  function limparTudo() {
-    if (confirm('Deseja limpar todo o histórico, estratégias e pesos?')) {
-      estrategias = [];
-      pesosEstrategias = {};
-      ultimoResultado = null;
-      localStorage.clear();
-      inputHistorico.value = '';
-      resultadoEl.textContent = '';
-      statusHistorico.textContent = '';
-      statusGeral.textContent = '';
-      btnAcertou.disabled = true;
-      btnErrou.disabled = true;
-    }
-  }
-
-  // Eventos
-  btnAnalisarHistorico.onclick = analisarHistorico;
-  btnAnalisarSinal.onclick = analisarSinalManual;
-  btnAcertou.onclick = sinalAcertou;
-  btnErrou.onclick = sinalErrou;
-  btnLimparTudo.onclick = limparTudo;
-
-  // Carregar estratégias ao iniciar
-  carregarEstrategias();
-})();
+});
 </script>
 
 </body>
