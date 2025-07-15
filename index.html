@@ -1,116 +1,204 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Scofield Analista - Previsão Branco</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
-    button { margin: 5px; padding: 12px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; }
-    .vermelho { background: #c0392b; color: white; }
-    .preto { background: #000; color: white; }
-    .branco { background: #ecf0f1; color: #000; border: 1px solid #ccc; }
-    #log { margin-top: 20px; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; }
-    #prediction { margin-top: 20px; }
-  </style>
+<meta charset="UTF-8" />
+<title>Scofield Analista - Padrões Branco</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
+  label, select, input { margin: 5px 0; display: block; }
+  button { margin-top: 10px; padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
+  .vermelho { background: #c0392b; color: white; }
+  .preto { background: #000; color: white; }
+  .branco { background: #ecf0f1; color: #000; border: 1px solid #ccc; }
+  #log { margin-top: 20px; max-height: 220px; overflow-y: auto; background: #eee; padding: 10px; }
+  #prediction { margin-top: 20px; font-weight: bold; }
+</style>
 </head>
 <body>
 
-<h1>Scofield Analista - Previsão Branco (5 min antes)</h1>
+<h1>Scofield Analista - Padrões Branco</h1>
 
-<div>
-  <button class="vermelho" onclick="addCor('vermelho')">🔴 Vermelho</button>
-  <button class="preto" onclick="addCor('preto')">⚫ Preto</button>
-  <button class="branco" onclick="addCor('branco')">⚪ Branco</button>
-</div>
+<form id="dataForm">
+  <label>Horário (HH:MM): <input type="time" id="horario" required></label>
+
+  <fieldset>
+    <legend>Pedra 1</legend>
+    <label>Cor:
+      <select id="cor1" required>
+        <option value="">Selecione</option>
+        <option value="vermelho">Vermelho</option>
+        <option value="preto">Preto</option>
+        <option value="branco">Branco</option>
+      </select>
+    </label>
+    <label>Número:
+      <input type="number" id="num1" min="0" max="14" required>
+    </label>
+    <label>
+      Branco nesta pedra?
+      <select id="branco1" required>
+        <option value="nao">Não</option>
+        <option value="sim">Sim</option>
+      </select>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Pedra 2</legend>
+    <label>Cor:
+      <select id="cor2" required>
+        <option value="">Selecione</option>
+        <option value="vermelho">Vermelho</option>
+        <option value="preto">Preto</option>
+        <option value="branco">Branco</option>
+      </select>
+    </label>
+    <label>Número:
+      <input type="number" id="num2" min="0" max="14" required>
+    </label>
+    <label>
+      Branco nesta pedra?
+      <select id="branco2" required>
+        <option value="nao">Não</option>
+        <option value="sim">Sim</option>
+      </select>
+    </label>
+  </fieldset>
+
+  <button type="submit" class="vermelho">Adicionar Resultado</button>
+</form>
 
 <div id="log"></div>
 <div id="prediction"></div>
 
 <script>
+  const dataForm = document.getElementById('dataForm');
   const logDiv = document.getElementById('log');
   const predictionDiv = document.getElementById('prediction');
+
   let results = JSON.parse(localStorage.getItem('results')) || [];
 
-  let parcial = []; // Guarda as duas cores do mesmo minuto
-  let minutoAtual = results.length ? results[results.length - 1].minuto + 1 : 0;
+  // Função para formatar horário para minutos corridos desde 00:00
+  function timeToMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
 
-  function addCor(cor) {
-    parcial.push(cor);
-
-    if (parcial.length === 2) {
-      // Salva as duas cores como um registro do mesmo minuto
-      results.push({
-        minuto: minutoAtual,
-        cores: [...parcial]
-      });
-      parcial = [];
-      minutoAtual++;
-      localStorage.setItem('results', JSON.stringify(results));
-      updateLog();
-      predictNextWhite();
-    }
+  // Função para converter minutos para HH:MM
+  function minutesToTime(min) {
+    const h = Math.floor(min / 60) % 24;
+    const m = min % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   }
 
   function updateLog() {
+    if (results.length === 0) {
+      logDiv.innerHTML = '<p>Nenhum resultado ainda.</p>';
+      return;
+    }
     logDiv.innerHTML = '';
-    results.forEach(r => {
-      const coresStr = r.cores.map(c => {
-        if (c === 'vermelho') return '🔴';
-        if (c === 'preto') return '⚫';
-        if (c === 'branco') return '⚪';
-      }).join(' ');
-      logDiv.innerHTML += `<div>Minuto ${r.minuto}: ${coresStr}</div>`;
+    results.forEach((r, i) => {
+      const pedra1 = `${emojiCor(r.cor1)} ${r.num1} ${r.branco1==='sim'?'⚪':''}`;
+      const pedra2 = `${emojiCor(r.cor2)} ${r.num2} ${r.branco2==='sim'?'⚪':''}`;
+      logDiv.innerHTML += `<div><strong>${r.horario}</strong>: Pedra 1 - ${pedra1} | Pedra 2 - ${pedra2}</div>`;
     });
   }
 
-  function predictNextWhite() {
-    const brancos = results.filter(r => r.cores.includes('branco'));
-
-    if (brancos.length < 2) {
-      predictionDiv.innerHTML = '⚠️ Dados insuficientes para prever o branco.';
-      return null;
-    }
-
-    // Calcula a média de minutos entre brancos
-    let intervalos = [];
-    for (let i = 1; i < brancos.length; i++) {
-      intervalos.push(brancos[i].minuto - brancos[i - 1].minuto);
-    }
-    const media = intervalos.reduce((a, b) => a + b, 0) / intervalos.length;
-
-    const ultimoBranco = brancos[brancos.length - 1].minuto;
-    const previsto = Math.round(ultimoBranco + media);
-    const agora = minutoAtual;
-
-    const falta = previsto - agora;
-
-    predictionDiv.innerHTML = `
-      <p>🧠 Média entre brancos: ${media.toFixed(1)} minutos</p>
-      <p>📅 Próximo branco previsto: <strong>Minuto ${previsto}</strong></p>
-      <p>⏰ Faltam: <strong>${falta}</strong> minuto(s)</p>
-    `;
-
-    return { previsto, falta };
+  // Retorna emoji para cor
+  function emojiCor(cor) {
+    if (cor === 'vermelho') return '🔴';
+    if (cor === 'preto') return '⚫';
+    if (cor === 'branco') return '⚪';
+    return '';
   }
 
-  function startAlertCountdown() {
-    const alertaMinutosAntes = 5;
+  // Detectar padrões Duplo, Dentado, Banguela
+  function detectarPadroes() {
+    let mensagens = [];
 
-    function checar() {
-      const pred = predictNextWhite();
-      if (!pred) return;
+    // Criar lista só com os minutos onde saiu branco (em qual pedra e qual minuto)
+    const brancos = [];
+    results.forEach((r,i) => {
+      if(r.branco1 === 'sim') brancos.push({ index:i, pedra:1 });
+      if(r.branco2 === 'sim') brancos.push({ index:i, pedra:2 });
+    });
 
-      if (pred.falta <= alertaMinutosAntes && pred.falta > 0) {
-        alert(`⚠️ ALERTA: Branco previsto em ${pred.falta} minutos!`);
-        playAlertSound();
-        clearInterval(intervalo);
+    // Detectar Duplo (branco seguido no minuto seguinte)
+    for(let i=0; i < brancos.length -1; i++) {
+      if(brancos[i+1].index === brancos[i].index + 1) {
+        mensagens.push(`Duplo detectado nos minutos ${results[brancos[i].index].horario} e ${results[brancos[i+1].index].horario}`);
       }
     }
 
-    const intervalo = setInterval(checar, 5000);
+    // Detectar Dentado (branco - qualquer pedra - branco em 3 minutos consecutivos)
+    for(let i=0; i < brancos.length -2; i++) {
+      if(brancos[i+1].index === brancos[i].index + 1 && brancos[i+2].index === brancos[i].index + 2) {
+        mensagens.push(`Dentado detectado entre os minutos ${results[brancos[i].index].horario}, ${results[brancos[i+1].index].horario} e ${results[brancos[i+2].index].horario}`);
+      }
+    }
+
+    // Detectar Banguela (brancos separados por até 3 pedras (ou seja, até 1 minuto e meio))
+    for(let i=0; i < brancos.length -1; i++) {
+      const diferenca = brancos[i+1].index - brancos[i].index;
+      if(diferenca > 1 && diferenca <= 3) {
+        mensagens.push(`Banguela detectada entre os minutos ${results[brancos[i].index].horario} e ${results[brancos[i+1].index].horario}`);
+      }
+    }
+
+    return mensagens;
   }
 
-  function playAlertSound() {
+  // Calcula a média dos intervalos entre brancos para previsão
+  function mediaIntervaloBranco() {
+    const brancosIndices = [];
+    results.forEach((r,i) => {
+      if(r.branco1 === 'sim' || r.branco2 === 'sim') brancosIndices.push(i);
+    });
+    if(brancosIndices.length < 2) return null;
+    let somaIntervalos = 0;
+    for(let i=1; i < brancosIndices.length; i++) {
+      somaIntervalos += (brancosIndices[i] - brancosIndices[i-1]);
+    }
+    return somaIntervalos / (brancosIndices.length -1);
+  }
+
+  // Prever próximo branco e avisar 5 minutos antes
+  function preverBranco() {
+    const media = mediaIntervaloBranco();
+    if(media === null) {
+      predictionDiv.textContent = 'Dados insuficientes para previsão.';
+      return null;
+    }
+
+    // Último branco
+    let ultimoBrancoIndex = -1;
+    for(let i=results.length -1; i>=0; i--) {
+      if(results[i].branco1 === 'sim' || results[i].branco2 === 'sim') {
+        ultimoBrancoIndex = i;
+        break;
+      }
+    }
+    if(ultimoBrancoIndex === -1) {
+      predictionDiv.textContent = 'Nenhum branco registrado ainda.';
+      return null;
+    }
+
+    const previstoIndex = Math.round(ultimoBrancoIndex + media);
+    const atualIndex = results.length - 1;
+    const falta = previstoIndex - atualIndex;
+
+    let msg = `Próximo branco previsto para ${previstoIndex >= results.length ? 'futuro próximo' : 'minuto ' + results[previstoIndex]?.horario || previstoIndex}`;
+
+    if(falta <= 5 && falta > 0) {
+      msg += ` (Faltam ${falta} minuto(s))`;
+      playAlert();
+    }
+    predictionDiv.textContent = msg;
+    return { falta };
+  }
+
+  // Alerta sonoro simples
+  function playAlert() {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     oscillator.type = 'square';
@@ -120,10 +208,36 @@
     oscillator.stop(audioCtx.currentTime + 0.5);
   }
 
-  // Início
+  // Intervalo para checar previsão e alertas a cada 5 segundos
+  setInterval(() => {
+    preverBranco();
+    const padroes = detectarPadroes();
+    if(padroes.length > 0) {
+      predictionDiv.innerHTML += '<br>⚠️ Padrões detectados:<br>' + padroes.join('<br>');
+    }
+  }, 5000);
+
+  dataForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const entry = {
+      horario: document.getElementById('horario').value,
+      cor1: document.getElementById('cor1').value,
+      num1: Number(document.getElementById('num1').value),
+      branco1: document.getElementById('branco1').value,
+      cor2: document.getElementById('cor2').value,
+      num2: Number(document.getElementById('num2').value),
+      branco2: document.getElementById('branco2').value
+    };
+    results.push(entry);
+    localStorage.setItem('results', JSON.stringify(results));
+    updateLog();
+    preverBranco();
+    dataForm.reset();
+  });
+
+  // Inicializar tela
   updateLog();
-  predictNextWhite();
-  startAlertCountdown();
+  preverBranco();
 </script>
 
 </body>
