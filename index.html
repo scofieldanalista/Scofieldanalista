@@ -1,196 +1,28 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>Scofield Analista com Feedback</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fff;
-      color: #000;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    .container {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-    .pedra {
-      width: 130px;
-      height: 170px;
-      border: 3px solid #999;
-      border-radius: 14px;
-      text-align: center;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      user-select: none;
-    }
-    .quadrado-cor {
-      width: 100%;
-      height: 130px;
-      border-radius: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 70px;
-      color: white;
-      user-select: none;
-    }
-    .vermelho { background-color: #c0392b; }
-    .preto { background-color: #000; }
-    .branco {
-      background-color: #ecf0f1;
-      color: #000;
-      position: relative;
-    }
-    .blaze-logo {
-      width: 65px;
-      height: 65px;
-      margin: auto;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Blaze_logo.svg/512px-Blaze_logo.svg.png') no-repeat center center;
-      background-size: contain;
-      pointer-events: none;
-    }
-    label {
-      font-weight: bold;
-      font-size: 15px;
-      margin-top: 5px;
-      user-select: none;
-    }
-    input[type=number], input[type=time] {
-      width: 100%;
-      font-size: 17px;
-      padding: 5px;
-      border-radius: 7px;
-      border: 1.5px solid #888;
-      text-align: center;
-      user-select: text;
-    }
-    button {
-      padding: 14px 32px;
-      font-size: 19px;
-      border: none;
-      background-color: #c0392b;
-      color: white;
-      border-radius: 12px;
-      cursor: pointer;
-      margin-top: 12px;
-      margin-right: 12px;
-      user-select: none;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #e74c3c;
-    }
-    #log {
-      max-height: 300px;
-      overflow-y: auto;
-      width: 100%;
-      max-width: 660px;
-      background: #f0f0f0;
-      padding: 18px;
-      border-radius: 14px;
-      font-size: 16px;
-      margin-top: 30px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      user-select: none;
-    }
-    .log-item {
-      margin-bottom: 15px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 8px;
-    }
-    #resultado {
-      margin-top: 28px;
-      font-weight: 700;
-      font-size: 22px;
-      color: #d63031;
-      max-width: 660px;
-      text-align: center;
-      user-select: none;
-    }
-    #status {
-      margin-top: 10px;
-      font-weight: 600;
-      font-size: 20px;
-      user-select: none;
-    }
-    #status.forte {
-      color: #27ae60;
-    }
-    #status.arriscado {
-      color: #f39c12;
-    }
-    #status.fraco {
-      color: #7f8c8d;
-    }
-    #feedback-area {
-      margin-top: 20px;
-      text-align: center;
-      user-select: none;
-    }
-    #feedback-area button {
-      background-color: #2980b9;
-      margin: 8px;
-    }
-  </style>
-</head>
-<body>
+function analisarDados() {
+  if(resultados.length < 2) {
+    alert('Precisa ter pelo menos 2 registros para analisar.');
+    return;
+  }
+  
+  // Pega os horários dos brancos em minutos
+  const brancos = resultados.map(r => {
+    const [h,m] = r.meio.horario.split(':').map(Number);
+    return h*60 + m;
+  }).sort((a,b) => a-b);
 
-  <h1>Scofield Analista com Feedback</h1>
+  // Calcula intervalos entre brancos
+  let intervalos = [];
+  for(let i=1; i<brancos.length; i++) {
+    intervalos.push(brancos[i] - brancos[i-1]);
+  }
 
-  <div class="container">
-    <div class="pedra" id="pedra-esq">
-      <div class="quadrado-cor vermelho" id="cor-esq" title="Clique para mudar a cor">🔴</div>
-      <label for="num-esq">Número</label>
-      <input type="number" id="num-esq" min="0" max="14" />
-      <label for="hora-esq">Horário</label>
-      <input type="time" id="hora-esq" />
-    </div>
+  // Média dos intervalos
+  const mediaIntervalo = intervalos.reduce((a,b) => a+b, 0) / intervalos.length;
 
-    <div class="pedra" id="pedra-meio">
-      <div class="quadrado-cor branco" id="cor-meio" title="Branco (Blaze)">
-        <div class="blaze-logo"></div>
-      </div>
-      <label for="hora-meio">Horário Branco</label>
-      <input type="time" id="hora-meio" />
-    </div>
+  // Próximo branco previsto
+  const ultimoBranco = brancos[brancos.length - 1];
+  const previstoMin = Math.round(ultimoBranco + mediaIntervalo);
+  const previstoHora = String(Math.floor(previstoMin/60)).padStart(2,'0') + ':' + String(previstoMin%60).padStart(2,'0');
 
-    <div class="pedra" id="pedra-dir">
-      <div class="quadrado-cor vermelho" id="cor-dir" title="Clique para mudar a cor">🔴</div>
-      <label for="num-dir">Número</label>
-      <input type="number" id="num-dir" min="0" max="14" />
-      <label for="hora-dir">Horário</label>
-      <input type="time" id="hora-dir" />
-    </div>
-  </div>
-
-  <div>
-    <button id="btn-salvar">Salvar Resultado</button>
-    <button id="btn-analisar">Analisar</button>
-    <button id="btn-limpar" style="background:#555;">🧼 Limpar Histórico</button>
-  </div>
-
-  <div id="resultado"></div>
-  <div id="status"></div>
-
-  <div id="feedback-area" style="display:none;">
-    <p>Acertou a previsão?</p>
-    <button id="btn-feedback-sim">Sim</button>
-    <button id="btn-feedback-nao">Não</button>
-  </div>
-
-  <div id="log"></div>
-
-<script>
-  const cores = ['vermel]()
+  document.getElementById('resultado').textContent = `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${previstoHora} — PREPARA!`;
+}
