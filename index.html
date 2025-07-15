@@ -312,4 +312,52 @@ function predictNextWhite() {
   let m = parseInt(parts[1],10);
   let s = parseInt(parts[2],10);
 
-  s += 30; // Previs
+  s += 30; // Previsão 30 segundos depois
+
+  if(s >= 60) { s -= 60; m += 1; }
+  if(m >= 60) { m -= 60; h += 1; }
+  if(h >= 24) { h = 0; }
+
+  const predictedTime = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  predictionText.innerHTML = `<span class="alert">PRÓXIMO BRANCO PROVÁVEL EM ${predictedTime} — PREPARA!</span>`;
+}
+
+// Eventos
+loadHistoryBtn.onclick = () => {
+  const rawText = historyInput.value;
+  historyData = parseHistory(rawText);
+  displayHistory();
+  const countBrancos = analyzeHistory();
+  alert(`Histórico carregado com ${historyData.length} pedras e ${countBrancos} brancos.`);
+  saveToStorage();
+};
+
+analyzeManualBtn.onclick = () => {
+  analyzeManualInput();
+};
+
+btnHit.onclick = () => {
+  learning.hits++;
+  saveToStorage();
+  alert(`Registrado acerto! Total de acertos: ${learning.hits}`);
+};
+
+btnMiss.onclick = () => {
+  learning.misses++;
+  saveToStorage();
+  alert(`Registrado erro! Total de erros: ${learning.misses}`);
+};
+
+// Carregar ao abrir
+if(historyData.length > 0){
+  displayHistory();
+  analyzeHistory();
+}
+if(strategies.length > 0){
+  predictNextWhite();
+}
+</script>
+
+</body>
+</html>
