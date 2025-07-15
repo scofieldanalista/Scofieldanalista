@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<title>Scofield Analista - Entrada Visual</title>
+<title>Scofield Analista - Análise Instantânea</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -79,25 +79,35 @@
     color: white;
     border-radius: 10px;
     cursor: pointer;
+    margin-top: 10px;
   }
   #log {
     max-height: 260px;
     overflow-y: auto;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     background: #eee;
     padding: 15px;
     border-radius: 12px;
     font-size: 16px;
+    margin-top: 25px;
   }
   .log-item {
     margin-bottom: 12px;
+  }
+  #resultado {
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: 18px;
+    color: #c0392b;
+    max-width: 600px;
+    text-align: center;
   }
 </style>
 </head>
 <body>
 
-<h1>Scofield Analista - Entrada Visual</h1>
+<h1>Scofield Analista - Entrada Visual & Análise</h1>
 
 <div class="container">
   <div class="pedra" id="pedra-esq">
@@ -126,28 +136,24 @@
 </div>
 
 <button id="btn-salvar">Salvar Resultado</button>
+<button id="btn-analisar">Analisar</button>
+
+<div id="resultado"></div>
 
 <div id="log"></div>
 
 <script>
   // Cores possíveis para esquerda e direita
   const cores = ['vermelho', 'preto'];
-  // Referências aos elementos
   const corEsqDiv = document.getElementById('cor-esq');
   const corDirDiv = document.getElementById('cor-dir');
 
   let corEsqIndex = 0;
   let corDirIndex = 0;
 
-  // Função para atualizar a cor visual do quadrado e emoji
   function atualizaCor(div, index) {
-    if(div === corEsqDiv) {
-      div.className = 'quadrado-cor ' + cores[index];
-      div.textContent = cores[index] === 'vermelho' ? '🔴' : '⚫';
-    } else {
-      div.className = 'quadrado-cor ' + cores[index];
-      div.textContent = cores[index] === 'vermelho' ? '🔴' : '⚫';
-    }
+    div.className = 'quadrado-cor ' + cores[index];
+    div.textContent = cores[index] === 'vermelho' ? '🔴' : '⚫';
   }
 
   corEsqDiv.addEventListener('click', () => {
@@ -160,7 +166,6 @@
     atualizaCor(corDirDiv, corDirIndex);
   });
 
-  // Dados armazenados
   let resultados = JSON.parse(localStorage.getItem('resultados')) || [];
 
   function salvaResultado() {
@@ -179,27 +184,16 @@
       return;
     }
 
-    const registro = {
-      esquerda: {
-        cor: cores[corEsqIndex],
-        numero: numEsq,
-        horario: horaEsq
-      },
-      meio: {
-        cor: 'branco',
-        horario: horaMeio
-      },
-      direita: {
-        cor: cores[corDirIndex],
-        numero: numDir,
-        horario: horaDir
-      }
-    };
+    resultados.push({
+      esquerda: { cor: cores[corEsqIndex], numero: numEsq, horario: horaEsq },
+      meio: { cor: 'branco', horario: horaMeio },
+      direita: { cor: cores[corDirIndex], numero: numDir, horario: horaDir }
+    });
 
-    resultados.push(registro);
     localStorage.setItem('resultados', JSON.stringify(resultados));
     atualizaLog();
     limpaFormulario();
+    document.getElementById('resultado').textContent = '';
   }
 
   function atualizaLog() {
@@ -228,9 +222,105 @@
     document.getElementById('hora-dir').value = '';
   }
 
-  document.getElementById('btn-salvar').addEventListener('click', salvaResultado);
+  // Função para converter HH:MM para minutos totais (ex: 10:45 => 645)
+  function horaParaMinutos(hora) {
+    const [h, m] = hora.split(':').map(Number);
+    return h * 60 + m;
+  }
 
-  // Inicializa as cores e log ao carregar
+  // Função para converter minutos totais para HH:MM
+  function minutosParaHora(minutos) {
+    const h = Math.floor(minutos / 60) % 24;
+    const m = minutos % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  // Detecta padrões Duplo, Dentado e Banguela (baseado nos horários)
+  function detectarPadroesBranco() {
+    const brancos = resultados.map((r, i) => ({
+      index: i,
+      horarioMin: horaParaMinutos(r.meio.horario)
+    })).sort((a,b) => a.horarioMin - b.horarioMin);
+
+    let padroesDetectados = [];
+
+    for(let i=0; i < brancos.length -1; i++) {
+      const diff = brancos[i+1].horarioMin - brancos[i].horarioMin;
+
+      // Duplo: branco seguido imediatamente (mesmo minuto ou próximo minuto)
+      if(diff === 0 || diff === 1) {
+        padroesDetectados.push(`Duplo: branco no minuto ${minutosParaHora(brancos[i].horarioMin)} seguido do minuto ${minutosParaHora(brancos[i+1].horarioMin)}`);
+      }
+      // Dentado: branco - qualquer pedra - branco (2 minutos de diferença)
+      else if(diff === 2) {
+        padroesDetectados.push(`Dentado: branco no minuto ${minutosParaHora(brancos[i].horarioMin)}, pedra qualquer, branco no minuto ${minutosParaHora(brancos[i+1].horarioMin)}`);
+      }
+      // Banguela: branco e outro branco com até 3 minutos de diferença (mas não imediato nem dentado)
+      else if(diff > 2 && diff <= 4) {
+        padroesDetectados.push(`Banguela: branco no minuto ${minutosParaHora(brancos[i].horarioMin)} e outro branco no minuto ${minutosParaHora(brancos[i+1].horarioMin)}`);
+      }
+    }
+    return padroesDetectados;
+  }
+
+  // Calcula média do intervalo em minutos entre os brancos para previsão
+  function mediaIntervaloBrancos() {
+    const brancos = resultados
+      .map(r => horaParaMinutos(r.meio.horario))
+      .sort((a,b) => a-b);
+    if(brancos.length < 2) return null;
+
+    let soma = 0;
+    for(let i=1; i < brancos.length; i++) {
+      soma += (brancos[i] - brancos[i-1]);
+    }
+    return soma / (brancos.length -1);
+  }
+
+  // Previsão do próximo branco baseada em média + padrões
+  function preverProximoBranco() {
+    const media = mediaIntervaloBrancos();
+    if(media === null) return 'Dados insuficientes para previsão.';
+
+    const ultBrancoMin = horaParaMinutos(resultados[resultados.length -1].meio.horario);
+    const previstoMin = Math.round(ultBrancoMin + media);
+    return `Próximo branco provável por volta das ${minutosParaHora(previstoMin)} (baseado na média de intervalos)`;
+  }
+
+  // Análise completa ao clicar no botão "Analisar"
+  function analisarDados() {
+    if(resultados.length === 0) {
+      alert('Nenhum dado para analisar.');
+      return;
+    }
+    const padroes = detectarPadroesBranco();
+    const previsao = preverProximoBranco();
+
+    const resultadoDiv = document.getElementById('resultado');
+    let html = previsao;
+    if(padroes.length) {
+      html += '<br><br><strong>Padrões detectados:</strong><br>' + padroes.join('<br>');
+      playAlerta();
+    } else {
+      html += '<br><br><em>Nenhum padrão especial detectado.</em>';
+    }
+    resultadoDiv.innerHTML = html;
+  }
+
+  // Alerta sonoro simples
+  function playAlerta() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.7);
+  }
+
+  document.getElementById('btn-salvar').addEventListener('click', salvaResultado);
+  document.getElementById('btn-analisar').addEventListener('click', analisarDados);
+
   atualizaCor(corEsqDiv, corEsqIndex);
   atualizaCor(corDirDiv, corDirIndex);
   atualizaLog();
