@@ -86,6 +86,80 @@
     font-size: 0.9em;
     color: #aaa;
   }
+
+  /* Layout pedras manual */
+  .manual-container {
+    display: flex;
+    justify-content: center;
+    gap: 1.5em;
+    flex-wrap: wrap;
+  }
+  .pedra-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+  }
+  .quadrado-cor {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    margin-bottom: 0.4em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    user-select: none;
+  }
+  .cor-preto {
+    background-color: #222;
+    border: 2px solid #555;
+    color: #eee;
+  }
+  .cor-vermelho {
+    background-color: #8b0000;
+    border: 2px solid #b22222;
+    color: #fff;
+  }
+  .cor-branco {
+    background-color: #eee;
+    border: 2px solid #ccc;
+    color: #333;
+    font-weight: bold;
+  }
+  /* Dado central */
+  .dado {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #eee, #ccc);
+    border: 2px solid #aaa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    user-select: none;
+    box-shadow: 1px 1px 6px #999 inset;
+  }
+  /* Inputs sob as pedras */
+  .inputs-pedra {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+    width: 80px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 0.3em 0.5em;
+    border-radius: 4px;
+    border: none;
+    font-size: 1em;
+    background: #333;
+    color: #eee;
+  }
+  input::placeholder {
+    color: #aaa;
+  }
 </style>
 </head>
 <body>
@@ -93,7 +167,7 @@
 <main>
 
 <label for="historico">Cole aqui o histórico da Blaze (TipMiner):</label>
-<textarea id="historico" placeholder="Exemplo:&#10;14:22:13 — ⚫️ 5&#10;14:21:01 — 🔴 9&#10;14:20:32 — ⚪️ 0"></textarea>
+<textarea id="historico" placeholder="Exemplo:&#10;14:22:13 — ⚫️ 5&#10;14:21:01 — 🔴 9&#10;14:20:32 — ⚪️"></textarea>
 
 <div class="btn-group" style="flex-wrap: nowrap; gap:0.6em;">
   <button id="btn-analisar-historico">Analisar Histórico</button>
@@ -103,24 +177,29 @@
 <hr style="border-color:#333; margin:1em 0;" />
 
 <label>Informe o sinal manual:</label>
+<div class="manual-container">
 
-<div style="display:flex; flex-wrap: wrap; gap:1em;">
-
-  <div style="flex:1 1 45%;">
-    <label for="manual-anterior">Pedra Anterior (Número e Horário hh:mm:ss):</label>
-    <input type="text" id="manual-anterior-num" placeholder="Número (ex: 5)" style="width:40%; padding:0.4em; font-size:1em;"/>
-    <input type="text" id="manual-anterior-time" placeholder="Horário (ex: 14:22:13)" style="width:55%; padding:0.4em; font-size:1em;"/>
+  <div class="pedra-box" id="pedra-anterior">
+    <div class="quadrado-cor cor-preto">⬛</div>
+    <div class="inputs-pedra">
+      <input type="number" id="manual-anterior-num" placeholder="Número" min="0" max="20" />
+      <input type="text" id="manual-anterior-time" placeholder="HH:mm:ss" />
+    </div>
   </div>
 
-  <div style="flex:1 1 45%;">
-    <label for="manual-branco">Branco (Horário hh:mm:ss):</label>
-    <input type="text" id="manual-branco-time" placeholder="Horário (ex: 14:20:32)" style="width:100%; padding:0.4em; font-size:1em;"/>
+  <div class="pedra-box" id="pedra-branco">
+    <div class="dado" title="Branco - dado 🎲">🎲</div>
+    <div class="inputs-pedra">
+      <input type="text" id="manual-branco-time" placeholder="HH:mm:ss" />
+    </div>
   </div>
 
-  <div style="flex:1 1 45%;">
-    <label for="manual-posterior">Pedra Posterior (Número e Horário hh:mm:ss):</label>
-    <input type="text" id="manual-posterior-num" placeholder="Número (ex: 7)" style="width:40%; padding:0.4em; font-size:1em;"/>
-    <input type="text" id="manual-posterior-time" placeholder="Horário (ex: 14:23:01)" style="width:55%; padding:0.4em; font-size:1em;"/>
+  <div class="pedra-box" id="pedra-posterior">
+    <div class="quadrado-cor cor-vermelho">⬛</div>
+    <div class="inputs-pedra">
+      <input type="number" id="manual-posterior-num" placeholder="Número" min="0" max="20" />
+      <input type="text" id="manual-posterior-time" placeholder="HH:mm:ss" />
+    </div>
   </div>
 
 </div>
@@ -189,13 +268,9 @@
   // Parsing linha do histórico
   // Exemplo linha: "14:22:13 — ⚫️ 5" ou "14:20:32 — ⚪️"
   function parseLinhaHistorico(linha) {
-    // Remove espaços extras
     linha = linha.trim();
     if(!linha) return null;
 
-    // Regex para horário, cor e opcional número
-    // Cor pode ser: ⚫️ (preto), 🔴 (vermelho), ⚪️ (branco)
-    // O travessão é '—' (U+2014)
     const regex = /^(\d{2}:\d{2}:\d{2})\s*—\s*(⚫️|🔴|⚪️)(?:\s*(\d+))?$/u;
     const m = linha.match(regex);
     if(!m) return null;
@@ -255,7 +330,6 @@
 
   // Criar ID para estratégia
   function criarIdEstrategia(estrat) {
-    // Exemplo: soma:17;intervaloSeg:200;cores:vermelho,preto,branco;
     return `soma:${estrat.soma};intervaloSeg:${estrat.intervaloSeg};cores:${estrat.cores.join(',')}`;
   }
 
@@ -272,212 +346,4 @@
       outputEl.textContent = 'Erro: histórico inválido ou incompleto (mínimo 3 linhas).';
       return;
     }
-    historicoDados = dados;
-
-    // Detectar brancos e pedras anterior e posterior
-    // Criar estratégias baseadas em:
-    // - Soma das pedras anterior + posterior
-    // - Intervalo em segundos entre brancos
-    // - Sequência de cores anterior e posterior
-    // - Horário de ocorrência
-
-    const novasEstrategias = [];
-
-    const brancos = historicoDados.filter(d=>d.cor==='branco');
-
-    for(let i=0; i<brancos.length; i++){
-      const branco = brancos[i];
-      // achar índice do branco no histórico
-      const idx = historicoDados.indexOf(branco);
-      if(idx<=0 || idx>=historicoDados.length-1) continue;
-
-      const anterior = historicoDados[idx-1];
-      const posterior = historicoDados[idx+1];
-      if(!anterior || !posterior) continue;
-
-      // soma dos números das pedras anterior + posterior
-      if(anterior.numero === null || posterior.numero === null) continue;
-      const soma = anterior.numero + posterior.numero;
-
-      // intervalo em segundos para próximo branco (se existir)
-      let intervaloSeg = null;
-      if(i < brancos.length -1) {
-        intervaloSeg = (brancos[i+1].horario - branco.horario)/1000;
-      }
-
-      // sequência de cores (anterior, branco, posterior)
-      const cores = [anterior.cor, branco.cor, posterior.cor];
-
-      // horário do branco em minutos e segundos
-      const minuto = branco.horario.getMinutes();
-      const segundo = branco.horario.getSeconds();
-
-      // criar estratégia
-      const estrategia = {
-        id: criarIdEstrategia({ soma, intervaloSeg: intervaloSeg||0, cores }),
-        soma,
-        intervaloSeg: intervaloSeg||0,
-        cores,
-        minuto,
-        segundo,
-        peso: pesosEstrategias[ criarIdEstrategia({ soma, intervaloSeg: intervaloSeg||0, cores }) ] || 1
-      };
-
-      // evitar duplicatas
-      if(!estrategias.find(e=>e.id === estrategia.id)){
-        novasEstrategias.push(estrategia);
-      }
-    }
-
-    // juntar com as estratégias já existentes e salvar
-    estrategias = estrategias.concat(novasEstrategias);
-    salvarEstrategias();
-
-    outputEl.textContent = `Análise concluída.\nEstratégias aprendidas: ${estrategias.length}`;
-    statusEl.textContent = 'Histórico analisado e estratégias atualizadas.';
-    btnAcertou.disabled = true;
-    btnErrou.disabled = true;
-  }
-
-  // Função para verificar se um sinal manual bate com alguma estratégia salva
-  function analisarSinalManual() {
-    outputEl.textContent = 'Analisando sinal manual...';
-
-    // Ler dados manuais
-    const antNum = parseInt(manualAnteriorNum.value, 10);
-    const antTime = parseHorario(manualAnteriorTime.value);
-    const brancoTime = parseHorario(manualBrancoTime.value);
-    const postNum = parseInt(manualPosteriorNum.value, 10);
-    const postTime = parseHorario(manualPosteriorTime.value);
-
-    if(
-      isNaN(antNum) || !antTime ||
-      !brancoTime ||
-      isNaN(postNum) || !postTime
-    ) {
-      outputEl.textContent = 'Erro: Preencha corretamente os números e horários com segundos.';
-      return;
-    }
-
-    // Criar dados de sinal manual
-    const sinal = {
-      anterior: { numero: antNum, horario: antTime, cor: null },
-      branco: { horario: brancoTime },
-      posterior: { numero: postNum, horario: postTime, cor: null }
-    };
-
-    // Verificar estratégias que batem com esse sinal
-    // Critérios simples: soma igual, cores igual (considerando pedra branca no meio), intervalo aproximado
-
-    const somaSinal = antNum + postNum;
-    const minutoSinal = brancoTime.getMinutes();
-    const segundoSinal = brancoTime.getSeconds();
-
-    let encontrados = [];
-
-    for(let est of estrategias){
-      // soma igual
-      if(est.soma !== somaSinal) continue;
-
-      // intervalo entre brancos: tolerância de +/- 10 segundos
-      const intervaloDiff = Math.abs(est.intervaloSeg - ((brancoTime - antTime)/1000));
-      if(intervaloDiff > 15) continue;
-
-      // cor sequência
-      if(est.cores[0] !== 'preto' && est.cores[0] !== 'vermelho') continue; // simplificação para demo
-      if(est.cores[1] !== 'branco') continue;
-      if(est.cores[2] !== 'preto' && est.cores[2] !== 'vermelho') continue;
-
-      encontrados.push(est);
-    }
-
-    if(encontrados.length === 0){
-      outputEl.textContent = 'Nenhuma estratégia conhecida identificada neste momento.';
-      btnAcertou.disabled = true;
-      btnErrou.disabled = true;
-      ultimoResultado = null;
-      statusEl.textContent = '';
-      return;
-    }
-
-    // Classificar pelo peso (mais forte primeiro)
-    encontrados.sort((a,b)=> (pesosEstrategias[b.id]||1) - (pesosEstrategias[a.id]||1));
-
-    ultimoResultado = encontrados[0];
-
-    // Mostrar resultado
-    outputEl.innerHTML = `
-      <span class="${ultimoResultado.peso >=2 ? 'alert-strong' : 'alert-weak'}">Padrão reconhecido — alerta de branco provável!</span>
-      \nEstratégia: Soma ${ultimoResultado.soma}, Intervalo ~${Math.round(ultimoResultado.intervaloSeg)}s
-      \nPróximo branco provável por volta de <b>${formatHorario(new Date(brancoTime.getTime() + ultimoResultado.intervaloSeg*1000))}</b>
-      \nPeso da estratégia: ${ultimoResultado.peso.toFixed(2)}
-      \n“Se você estiver lendo isso... o plano já começou.”
-    `;
-
-    // Habilitar botões para aprendizado
-    btnAcertou.disabled = false;
-    btnErrou.disabled = false;
-
-    // Status com indicação forte ou fraco
-    statusEl.textContent = ultimoResultado.peso >= 2
-      ? 'Sinal FORTE - prepare-se!'
-      : 'Sinal FRACO - aposte com cautela.';
-  }
-
-  // Ajustar peso da estratégia com base em feedback
-  function feedbackAcertou() {
-    if(!ultimoResultado) return;
-    pesosEstrategias[ultimoResultado.id] = (pesosEstrategias[ultimoResultado.id] || 1) + 1;
-    salvarEstrategias();
-    statusEl.textContent = 'Feedback: Acertou! Peso da estratégia aumentado.';
-    btnAcertou.disabled = true;
-    btnErrou.disabled = true;
-  }
-  function feedbackErrou() {
-    if(!ultimoResultado) return;
-    pesosEstrategias[ultimoResultado.id] = Math.max(0, (pesosEstrategias[ultimoResultado.id] || 1) - 1);
-    salvarEstrategias();
-    statusEl.textContent = 'Feedback: Errou. Peso da estratégia reduzido.';
-    btnAcertou.disabled = true;
-    btnErrou.disabled = true;
-  }
-
-  // Detecção simples de REC e chuva de brancos (baseado em intervalo)
-  function detectarRecOuChuva() {
-    if(historicoDados.length === 0) return '';
-
-    const brancos = historicoDados.filter(d => d.cor === 'branco').sort((a,b)=>a.horario-b.horario);
-    if(brancos.length < 2) return '';
-
-    const ultimoBranco = brancos[brancos.length -1];
-    const penultimoBranco = brancos[brancos.length -2];
-    const intervaloSeg = (ultimoBranco.horario - penultimoBranco.horario)/1000;
-
-    if(intervaloSeg <= 90) return '🌧️ Chuva de brancos detectada!';
-
-    if(intervaloSeg >= 180 && intervaloSeg <= 300) return '🔄 REC detectada!';
-
-    return '';
-  }
-
-  // Inicializar
-  function init() {
-    carregarEstrategias();
-    btnAnalisarHistorico.onclick = analisarHistorico;
-    btnLimparTudo.onclick = limparTudo;
-    btnAnalisarSinal.onclick = analisarSinalManual;
-    btnAcertou.onclick = feedbackAcertou;
-    btnErrou.onclick = feedbackErrou;
-
-    outputEl.textContent = 'Cole o histórico e clique em "Analisar Histórico" para começar.';
-    statusEl.textContent = '';
-  }
-
-  init();
-
-})();
-</script>
-
-</main>
-</body>
-</html>
+    historico
