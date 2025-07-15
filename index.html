@@ -23,6 +23,7 @@
       justify-content: center;
       gap: 15px;
       margin-bottom: 15px;
+      flex-wrap: wrap;
     }
     .pedra {
       background: #222;
@@ -50,8 +51,7 @@
     button {
       padding: 10px 18px;
       font-size: 16px;
-      margin-right: 10px;
-      margin-top: 10px;
+      margin: 5px;
       border: none;
       border-radius: 8px;
       background: #f39c12;
@@ -137,7 +137,6 @@
     }).join('<br>');
   }
 
-  // Calcula a média dos intervalos entre os brancos no histórico
   function calcularMediaIntervaloHistorico() {
     if (brancosHistorico.length < 2) return 6;
     const brancosMin = brancosHistorico.map(h => horaParaMinutos(h)).sort((a,b)=>a-b);
@@ -187,7 +186,6 @@
     document.getElementById('confiança').textContent = conf.text;
     document.getElementById('confiança').style.color = conf.color;
 
-    // Detecção de chuva de brancos
     let chuvaCount = 0;
     for (let i = brancosMin.length - 1; i >= 0; i--) {
       if (ultimoBranco - brancosMin[i] <= 5) {
