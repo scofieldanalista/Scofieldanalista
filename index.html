@@ -2,379 +2,482 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>Scofield Analista — Plano Sombra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Scofield Analista - Plano Sombra</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
   body {
     background-color: #121212;
     color: #eee;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Consolas', monospace, monospace;
     margin: 0; padding: 0;
     display: flex; flex-direction: column; min-height: 100vh;
   }
   header {
-    background: #b30000;
-    padding: 12px 20px;
+    background: #220000;
+    padding: 1em;
     text-align: center;
-    font-size: 1.8rem;
+    font-size: 1.5em;
     font-weight: bold;
-    color: #fff;
+    color: #f44336;
     user-select: none;
   }
   main {
     flex: 1;
-    padding: 15px 20px;
+    padding: 1em;
+    max-width: 600px;
+    margin: auto;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 1em;
   }
-  textarea#historico {
+  textarea {
     width: 100%;
-    min-height: 140px;
-    background: #1c1c1c;
-    border: 2px solid #b30000;
-    border-radius: 6px;
+    height: 120px;
+    background: #222;
+    border: none;
+    border-radius: 4px;
     color: #eee;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1rem;
-    padding: 10px;
+    font-size: 1em;
+    padding: 0.8em;
     resize: vertical;
   }
+  label {
+    font-weight: bold;
+    color: #f44336;
+  }
   button {
-    background: #b30000;
+    background-color: #f44336;
     border: none;
-    padding: 12px 20px;
-    color: white;
-    font-weight: 700;
+    padding: 0.8em 1.2em;
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 4px;
     cursor: pointer;
-    border-radius: 6px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.1rem;
-    transition: background-color 0.25s ease;
+    user-select: none;
+    transition: background-color 0.3s ease;
   }
   button:hover {
-    background: #ff0000;
-  }
-  #resultado {
-    background: #1a1a1a;
-    border: 1px solid #b30000;
-    border-radius: 6px;
-    padding: 12px 15px;
-    font-size: 1rem;
-    min-height: 100px;
-    white-space: pre-wrap;
-    overflow-y: auto;
-    color: #eee;
+    background-color: #ff6659;
   }
   .btn-group {
     display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 10px;
+    gap: 0.8em;
+    flex-wrap: wrap;
   }
-  .btn-sinal {
-    flex: 1;
+  .output {
     background: #222;
-    color: #b30000;
-    border: 2px solid #b30000;
-    font-weight: 700;
-    user-select: none;
+    border-radius: 4px;
+    padding: 1em;
+    font-size: 1em;
+    white-space: pre-wrap;
+    min-height: 150px;
+    color: #ddd;
   }
-  .btn-sinal.active {
-    background: #b30000;
-    color: #fff;
+  .alert-strong {
+    color: #ff3b3b;
+    font-weight: bold;
   }
-  footer {
-    padding: 10px;
-    font-size: 0.85rem;
-    text-align: center;
-    color: #b30000;
-    user-select: none;
+  .alert-weak {
+    color: #ffa500;
+    font-weight: bold;
   }
-  .frase-scofield {
-    margin-top: 15px;
-    font-size: 1.25rem;
-    color: #ff3333;
-    font-weight: 700;
-    text-align: center;
+  .status {
+    font-size: 0.9em;
+    color: #aaa;
   }
 </style>
 </head>
 <body>
-
-<header>Scofield Analista — Plano Sombra</header>
-
+<header>Scofield Analista - Plano Sombra</header>
 <main>
-  <label for="historico">Cole o histórico do jogo aqui (formato TipMiner):</label>
-  <textarea id="historico" placeholder="Exemplo:\n14:22:00 — ⚫️ 5\n14:21:00 — 🔴 9\n14:20:00 — ⚪️ 0\n..."></textarea>
-  
-  <button id="btnAnalisar">Analisar</button>
-  
-  <div id="resultado" aria-live="polite" aria-atomic="true"></div>
 
-  <div class="btn-group" role="group" aria-label="Sinais manuais para reforço">
-    <button id="btnAnterior" class="btn-sinal" aria-pressed="false">Pedra Anterior</button>
-    <button id="btnBranco" class="btn-sinal" aria-pressed="false">Branco</button>
-    <button id="btnPosterior" class="btn-sinal" aria-pressed="false">Pedra Posterior</button>
+<label for="historico">Cole aqui o histórico da Blaze (TipMiner):</label>
+<textarea id="historico" placeholder="Exemplo:&#10;14:22:13 — ⚫️ 5&#10;14:21:01 — 🔴 9&#10;14:20:32 — ⚪️ 0"></textarea>
+
+<div class="btn-group" style="flex-wrap: nowrap; gap:0.6em;">
+  <button id="btn-analisar-historico">Analisar Histórico</button>
+  <button id="btn-limpar-tudo" style="background:#555;">Limpar Tudo</button>
+</div>
+
+<hr style="border-color:#333; margin:1em 0;" />
+
+<label>Informe o sinal manual:</label>
+
+<div style="display:flex; flex-wrap: wrap; gap:1em;">
+
+  <div style="flex:1 1 45%;">
+    <label for="manual-anterior">Pedra Anterior (Número e Horário hh:mm:ss):</label>
+    <input type="text" id="manual-anterior-num" placeholder="Número (ex: 5)" style="width:40%; padding:0.4em; font-size:1em;"/>
+    <input type="text" id="manual-anterior-time" placeholder="Horário (ex: 14:22:13)" style="width:55%; padding:0.4em; font-size:1em;"/>
   </div>
 
-  <div class="frase-scofield" id="fraseScofield" aria-live="polite"></div>
-</main>
+  <div style="flex:1 1 45%;">
+    <label for="manual-branco">Branco (Horário hh:mm:ss):</label>
+    <input type="text" id="manual-branco-time" placeholder="Horário (ex: 14:20:32)" style="width:100%; padding:0.4em; font-size:1em;"/>
+  </div>
 
-<footer>© 2025 Scofield Analista</footer>
+  <div style="flex:1 1 45%;">
+    <label for="manual-posterior">Pedra Posterior (Número e Horário hh:mm:ss):</label>
+    <input type="text" id="manual-posterior-num" placeholder="Número (ex: 7)" style="width:40%; padding:0.4em; font-size:1em;"/>
+    <input type="text" id="manual-posterior-time" placeholder="Horário (ex: 14:23:01)" style="width:55%; padding:0.4em; font-size:1em;"/>
+  </div>
+
+</div>
+
+<div class="btn-group" style="margin-top:0.8em;">
+  <button id="btn-analisar-sinal">Analisar Sinal Manual</button>
+</div>
+
+<hr style="border-color:#333; margin:1em 0;" />
+
+<div class="output" id="output"></div>
+
+<div style="margin-top:1em;">
+  <button id="btn-acertou" style="background:#2ecc71;" disabled>Acertou</button>
+  <button id="btn-errou" style="background:#e74c3c;" disabled>Errou</button>
+</div>
+
+<div class="status" id="status"></div>
 
 <script>
 (() => {
   const historicoEl = document.getElementById('historico');
-  const resultadoEl = document.getElementById('resultado');
-  const btnAnalisar = document.getElementById('btnAnalisar');
-  const fraseScofieldEl = document.getElementById('fraseScofield');
-  const btnAnterior = document.getElementById('btnAnterior');
-  const btnBranco = document.getElementById('btnBranco');
-  const btnPosterior = document.getElementById('btnPosterior');
+  const outputEl = document.getElementById('output');
+  const statusEl = document.getElementById('status');
 
-  // Estado dos sinais manuais
-  let sinalManual = {
-    anterior: false,
-    branco: false,
-    posterior: false
-  };
+  const btnAnalisarHistorico = document.getElementById('btn-analisar-historico');
+  const btnLimparTudo = document.getElementById('btn-limpar-tudo');
+  const btnAnalisarSinal = document.getElementById('btn-analisar-sinal');
+  const btnAcertou = document.getElementById('btn-acertou');
+  const btnErrou = document.getElementById('btn-errou');
 
-  // Função para alternar botão sinal
-  function toggleBtnSinal(btn, key) {
-    sinalManual[key] = !sinalManual[key];
-    btn.classList.toggle('active', sinalManual[key]);
-    btn.setAttribute('aria-pressed', sinalManual[key]);
-  }
-  btnAnterior.addEventListener('click', () => toggleBtnSinal(btnAnterior, 'anterior'));
-  btnBranco.addEventListener('click', () => toggleBtnSinal(btnBranco, 'branco'));
-  btnPosterior.addEventListener('click', () => toggleBtnSinal(btnPosterior, 'posterior'));
+  const manualAnteriorNum = document.getElementById('manual-anterior-num');
+  const manualAnteriorTime = document.getElementById('manual-anterior-time');
+  const manualBrancoTime = document.getElementById('manual-branco-time');
+  const manualPosteriorNum = document.getElementById('manual-posterior-num');
+  const manualPosteriorTime = document.getElementById('manual-posterior-time');
 
-  // Função para salvar e carregar localStorage
-  function salvarLocal(data) {
-    try {
-      localStorage.setItem('planoSombraDados', JSON.stringify(data));
-    } catch(e) {
-      console.warn('Falha ao salvar localStorage', e);
+  // --- Dados salvos ---
+  let historicoDados = []; // array de objetos { horario: Date, cor: string, numero: number|null }
+  let estrategias = []; // array de estratégias aprendidas
+  let ultimoResultado = null; // resultado da última análise manual
+  let pesosEstrategias = {}; // { idEstrategia: peso } - para ajustar por acertou/errou
+
+  // --- Funções utilitárias ---
+
+  // Parse de horário "HH:mm:ss" para Date do dia atual
+  function parseHorario(horaStr) {
+    const [h, m, s] = horaStr.split(':').map(x => parseInt(x,10));
+    if (
+      h>=0 && h<=23 &&
+      m>=0 && m<=59 &&
+      s>=0 && s<=59
+    ) {
+      const d = new Date();
+      d.setHours(h, m, s, 0);
+      return d;
     }
-  }
-  function carregarLocal() {
-    try {
-      const str = localStorage.getItem('planoSombraDados');
-      if (!str) return null;
-      return JSON.parse(str);
-    } catch(e) {
-      return null;
-    }
-  }
-
-  // Converter emoji/color para texto cor
-  function emojiParaCor(emoji) {
-    if(!emoji) return null;
-    if(emoji.includes('⚪')) return 'branco';
-    if(emoji.includes('🔴')) return 'vermelho';
-    if(emoji.includes('⚫')) return 'preto';
     return null;
   }
 
-  // Parse do histórico colado para array de objetos {horario, cor, numero}
-  function parseHistorico(texto) {
-    const linhas = texto.trim().split('\n').filter(l => l.trim().length>0);
+  // Formatar horário Date para "HH:mm:ss"
+  function formatHorario(date) {
+    return date.toTimeString().slice(0,8);
+  }
+
+  // Parsing linha do histórico
+  // Exemplo linha: "14:22:13 — ⚫️ 5" ou "14:20:32 — ⚪️"
+  function parseLinhaHistorico(linha) {
+    // Remove espaços extras
+    linha = linha.trim();
+    if(!linha) return null;
+
+    // Regex para horário, cor e opcional número
+    // Cor pode ser: ⚫️ (preto), 🔴 (vermelho), ⚪️ (branco)
+    // O travessão é '—' (U+2014)
+    const regex = /^(\d{2}:\d{2}:\d{2})\s*—\s*(⚫️|🔴|⚪️)(?:\s*(\d+))?$/u;
+    const m = linha.match(regex);
+    if(!m) return null;
+
+    let cor = null;
+    switch(m[2]){
+      case '⚫️': cor='preto'; break;
+      case '🔴': cor='vermelho'; break;
+      case '⚪️': cor='branco'; break;
+      default: cor=null;
+    }
+    const horario = parseHorario(m[1]);
+    if(!horario) return null;
+
+    const numero = m[3] !== undefined ? parseInt(m[3],10) : null;
+    return { horario, cor, numero };
+  }
+
+  // Salvar estratégias no localStorage
+  function salvarEstrategias() {
+    localStorage.setItem('scofield_estrategias', JSON.stringify(estrategias));
+    localStorage.setItem('scofield_pesos', JSON.stringify(pesosEstrategias));
+  }
+  // Carregar estratégias do localStorage
+  function carregarEstrategias() {
+    try {
+      const est = JSON.parse(localStorage.getItem('scofield_estrategias'));
+      if(Array.isArray(est)) estrategias = est;
+      const pesos = JSON.parse(localStorage.getItem('scofield_pesos'));
+      if(pesos && typeof pesos === 'object') pesosEstrategias = pesos;
+    } catch {
+      estrategias = [];
+      pesosEstrategias = {};
+    }
+  }
+
+  // Limpar tudo
+  function limparTudo() {
+    if(confirm("Deseja limpar todo histórico, estratégias e pesos?")) {
+      historicoDados = [];
+      estrategias = [];
+      pesosEstrategias = {};
+      ultimoResultado = null;
+      salvarEstrategias();
+      historicoEl.value = '';
+      manualAnteriorNum.value = '';
+      manualAnteriorTime.value = '';
+      manualBrancoTime.value = '';
+      manualPosteriorNum.value = '';
+      manualPosteriorTime.value = '';
+      btnAcertou.disabled = true;
+      btnErrou.disabled = true;
+      outputEl.textContent = '';
+      statusEl.textContent = 'Dados limpos.';
+    }
+  }
+
+  // Criar ID para estratégia
+  function criarIdEstrategia(estrat) {
+    // Exemplo: soma:17;intervaloSeg:200;cores:vermelho,preto,branco;
+    return `soma:${estrat.soma};intervaloSeg:${estrat.intervaloSeg};cores:${estrat.cores.join(',')}`;
+  }
+
+  // Analisar histórico e gerar estratégias
+  function analisarHistorico() {
+    outputEl.textContent = 'Analisando histórico...';
+    const linhas = historicoEl.value.split('\n');
     const dados = [];
-    for (const linha of linhas) {
-      // Exemplo linha: "14:22:00 — ⚫️ 5" ou "14:22 — ⚫️ 5"
-      // Separar por "—"
-      const partes = linha.split('—');
-      if(partes.length !== 2) continue;
+    for(let linha of linhas){
+      const p = parseLinhaHistorico(linha);
+      if(p) dados.push(p);
+    }
+    if(dados.length < 3) {
+      outputEl.textContent = 'Erro: histórico inválido ou incompleto (mínimo 3 linhas).';
+      return;
+    }
+    historicoDados = dados;
 
-      const horarioRaw = partes[0].trim();
-      const corNumRaw = partes[1].trim();
+    // Detectar brancos e pedras anterior e posterior
+    // Criar estratégias baseadas em:
+    // - Soma das pedras anterior + posterior
+    // - Intervalo em segundos entre brancos
+    // - Sequência de cores anterior e posterior
+    // - Horário de ocorrência
 
-      // Extraindo horário completo HH:mm:ss ou HH:mm
-      let horario = null;
-      if(/^\d{2}:\d{2}:\d{2}$/.test(horarioRaw)) {
-        horario = horarioRaw;
-      } else if(/^\d{2}:\d{2}$/.test(horarioRaw)) {
-        horario = horarioRaw + ':00';
-      } else {
-        // horário inválido, pula linha
-        continue;
+    const novasEstrategias = [];
+
+    const brancos = historicoDados.filter(d=>d.cor==='branco');
+
+    for(let i=0; i<brancos.length; i++){
+      const branco = brancos[i];
+      // achar índice do branco no histórico
+      const idx = historicoDados.indexOf(branco);
+      if(idx<=0 || idx>=historicoDados.length-1) continue;
+
+      const anterior = historicoDados[idx-1];
+      const posterior = historicoDados[idx+1];
+      if(!anterior || !posterior) continue;
+
+      // soma dos números das pedras anterior + posterior
+      if(anterior.numero === null || posterior.numero === null) continue;
+      const soma = anterior.numero + posterior.numero;
+
+      // intervalo em segundos para próximo branco (se existir)
+      let intervaloSeg = null;
+      if(i < brancos.length -1) {
+        intervaloSeg = (brancos[i+1].horario - branco.horario)/1000;
       }
 
-      // Agora separa cor e número
-      // Cor é o emoji, número vem depois, exemplo: "⚫️ 5"
-      const corMatch = corNumRaw.match(/[⚪🔴⚫]/);
-      if(!corMatch) continue;
-      const cor = emojiParaCor(corMatch[0]);
+      // sequência de cores (anterior, branco, posterior)
+      const cores = [anterior.cor, branco.cor, posterior.cor];
 
-      const numeroStr = corNumRaw.replace(/[⚪🔴⚫️\s]/g, '').trim();
-      const numero = parseInt(numeroStr, 10);
-      if(isNaN(numero)) continue;
+      // horário do branco em minutos e segundos
+      const minuto = branco.horario.getMinutes();
+      const segundo = branco.horario.getSeconds();
 
-      dados.push({ horario, cor, numero });
-    }
-    return dados;
-  }
-
-  // Função para detectar brancos no histórico e relacionar com sinais manuais
-  function detectarBrancos(dados, sinais) {
-    // Cria uma lista dos índices de brancos no histórico
-    const brancos = [];
-    dados.forEach((item, idx) => {
-      if(item.cor === 'branco') brancos.push(idx);
-    });
-    // Retorna objeto com brancos e suas pedras anterior/posterior informadas manualmente
-    // Por padrão, usa as pedras anteriores/posteriores que o usuário marcou no botão manual
-    return brancos.map(idx => {
-      return {
-        indice: idx,
-        branco: dados[idx],
-        anterior: sinais.anterior && idx > 0 ? dados[idx - 1] : null,
-        posterior: sinais.posterior && idx < dados.length -1 ? dados[idx +1] : null
+      // criar estratégia
+      const estrategia = {
+        id: criarIdEstrategia({ soma, intervaloSeg: intervaloSeg||0, cores }),
+        soma,
+        intervaloSeg: intervaloSeg||0,
+        cores,
+        minuto,
+        segundo,
+        peso: pesosEstrategias[ criarIdEstrategia({ soma, intervaloSeg: intervaloSeg||0, cores }) ] || 1
       };
-    });
-  }
 
-  // Função para criar estratégias simples baseadas em soma e tempo entre brancos
-  function analisarPadroes(dados, brancosComSinais) {
-    // Estratégia 1: Soma das pedras anterior + posterior quando branco aparece
-    // Estratégia 2: Intervalo de tempo médio entre brancos
-    // Estratégia 3: Sequência repetida de cores antes do branco
-
-    let resultado = '';
-
-    if(brancosComSinais.length === 0) {
-      resultado += 'Nenhum branco detectado com sinais manuais para análise.\n';
-      return resultado;
-    }
-
-    // Soma anterior+posterior
-    let somaTotal = 0, somaCount = 0;
-    brancosComSinais.forEach(b => {
-      if(b.anterior && b.posterior) {
-        somaTotal += b.anterior.numero + b.posterior.numero;
-        somaCount++;
+      // evitar duplicatas
+      if(!estrategias.find(e=>e.id === estrategia.id)){
+        novasEstrategias.push(estrategia);
       }
-    });
-    if(somaCount > 0) {
-      const mediaSoma = somaTotal / somaCount;
-      resultado += `🔴 Média da soma (anterior + posterior) para brancos: ${mediaSoma.toFixed(2)}\n`;
-    } else {
-      resultado += '⚠️ Sem dados suficientes para média de soma anterior + posterior.\n';
     }
 
-    // Intervalo de tempo médio entre brancos
-    if(brancosComSinais.length > 1) {
-      let totalSegundos = 0, intervalosCount = 0;
-      for(let i=1; i<brancosComSinais.length; i++) {
-        const t1 = brancosComSinais[i-1].branco.horario;
-        const t2 = brancosComSinais[i].branco.horario;
-        const seg1 = toSeconds(t1);
-        const seg2 = toSeconds(t2);
-        totalSegundos += (seg1 > seg2) ? (86400 - seg1 + seg2) : (seg2 - seg1); // considera dia virando
-        intervalosCount++;
-      }
-      const mediaIntervalo = totalSegundos / intervalosCount;
-      resultado += `⏱️ Intervalo médio entre brancos: ${formatSegundos(mediaIntervalo)}\n`;
-    } else {
-      resultado += '⚠️ Intervalos de tempo insuficientes para análise.\n';
-    }
+    // juntar com as estratégias já existentes e salvar
+    estrategias = estrategias.concat(novasEstrategias);
+    salvarEstrategias();
 
-    // Sequência de cores antes do branco (últimas 3 pedras antes do branco)
-    const seqs = {};
-    brancosComSinais.forEach(b => {
-      const idx = b.indice;
-      if(idx < 3) return;
-      const seq = dados.slice(idx-3, idx).map(d => d.cor).join('-');
-      seqs[seq] = (seqs[seq] || 0) + 1;
-    });
-    const seqsOrdenadas = Object.entries(seqs).sort((a,b) => b[1]-a[1]);
-    if(seqsOrdenadas.length > 0) {
-      resultado += '🎯 Sequências mais frequentes antes do branco:\n';
-      seqsOrdenadas.slice(0,3).forEach(([seq, count]) => {
-        resultado += `- ${seq.replace(/-/g, ' → ')} (ocorreu ${count}x)\n`;
-      });
-    } else {
-      resultado += '⚠️ Não foram encontradas sequências suficientes para análise.\n';
-    }
-
-    return resultado;
+    outputEl.textContent = `Análise concluída.\nEstratégias aprendidas: ${estrategias.length}`;
+    statusEl.textContent = 'Histórico analisado e estratégias atualizadas.';
+    btnAcertou.disabled = true;
+    btnErrou.disabled = true;
   }
 
-  // Converte horário "HH:mm:ss" para segundos do dia
-  function toSeconds(horaStr) {
-    const [h,m,s] = horaStr.split(':').map(x => parseInt(x,10));
-    return h*3600 + m*60 + s;
-  }
-  // Formata segundos para "mm:ss"
-  function formatSegundos(seg) {
-    const m = Math.floor(seg/60);
-    const s = Math.floor(seg%60);
-    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-  }
+  // Função para verificar se um sinal manual bate com alguma estratégia salva
+  function analisarSinalManual() {
+    outputEl.textContent = 'Analisando sinal manual...';
 
-  // Função principal ao clicar em Analisar
-  function analisar() {
-    fraseScofieldEl.textContent = '';
-    resultadoEl.textContent = '';
-    const texto = historicoEl.value;
-    if(!texto.trim()) {
-      resultadoEl.textContent = '⚠️ Cole o histórico antes de analisar.';
+    // Ler dados manuais
+    const antNum = parseInt(manualAnteriorNum.value, 10);
+    const antTime = parseHorario(manualAnteriorTime.value);
+    const brancoTime = parseHorario(manualBrancoTime.value);
+    const postNum = parseInt(manualPosteriorNum.value, 10);
+    const postTime = parseHorario(manualPosteriorTime.value);
+
+    if(
+      isNaN(antNum) || !antTime ||
+      !brancoTime ||
+      isNaN(postNum) || !postTime
+    ) {
+      outputEl.textContent = 'Erro: Preencha corretamente os números e horários com segundos.';
       return;
     }
 
-    const dados = parseHistorico(texto);
-    if(dados.length === 0) {
-      resultadoEl.textContent = '⚠️ Histórico inválido ou sem dados válidos.';
+    // Criar dados de sinal manual
+    const sinal = {
+      anterior: { numero: antNum, horario: antTime, cor: null },
+      branco: { horario: brancoTime },
+      posterior: { numero: postNum, horario: postTime, cor: null }
+    };
+
+    // Verificar estratégias que batem com esse sinal
+    // Critérios simples: soma igual, cores igual (considerando pedra branca no meio), intervalo aproximado
+
+    const somaSinal = antNum + postNum;
+    const minutoSinal = brancoTime.getMinutes();
+    const segundoSinal = brancoTime.getSeconds();
+
+    let encontrados = [];
+
+    for(let est of estrategias){
+      // soma igual
+      if(est.soma !== somaSinal) continue;
+
+      // intervalo entre brancos: tolerância de +/- 10 segundos
+      const intervaloDiff = Math.abs(est.intervaloSeg - ((brancoTime - antTime)/1000));
+      if(intervaloDiff > 15) continue;
+
+      // cor sequência
+      if(est.cores[0] !== 'preto' && est.cores[0] !== 'vermelho') continue; // simplificação para demo
+      if(est.cores[1] !== 'branco') continue;
+      if(est.cores[2] !== 'preto' && est.cores[2] !== 'vermelho') continue;
+
+      encontrados.push(est);
+    }
+
+    if(encontrados.length === 0){
+      outputEl.textContent = 'Nenhuma estratégia conhecida identificada neste momento.';
+      btnAcertou.disabled = true;
+      btnErrou.disabled = true;
+      ultimoResultado = null;
+      statusEl.textContent = '';
       return;
     }
 
-    // Detectar brancos usando sinais manuais
-    const brancosComSinais = detectarBrancos(dados, sinalManual);
+    // Classificar pelo peso (mais forte primeiro)
+    encontrados.sort((a,b)=> (pesosEstrategias[b.id]||1) - (pesosEstrategias[a.id]||1));
 
-    // Salvar tudo localmente
-    salvarLocal({historico:texto, sinais:sinalManual});
+    ultimoResultado = encontrados[0];
 
-    // Analisar padrões
-    const analise = analisarPadroes(dados, brancosComSinais);
+    // Mostrar resultado
+    outputEl.innerHTML = `
+      <span class="${ultimoResultado.peso >=2 ? 'alert-strong' : 'alert-weak'}">Padrão reconhecido — alerta de branco provável!</span>
+      \nEstratégia: Soma ${ultimoResultado.soma}, Intervalo ~${Math.round(ultimoResultado.intervaloSeg)}s
+      \nPróximo branco provável por volta de <b>${formatHorario(new Date(brancoTime.getTime() + ultimoResultado.intervaloSeg*1000))}</b>
+      \nPeso da estratégia: ${ultimoResultado.peso.toFixed(2)}
+      \n“Se você estiver lendo isso... o plano já começou.”
+    `;
 
-    resultadoEl.textContent = analise;
+    // Habilitar botões para aprendizado
+    btnAcertou.disabled = false;
+    btnErrou.disabled = false;
 
-    // Se algum padrão relevante (ex: média soma entre 10 e 20), ativar frase Scofield
-    if(analise.includes('Média da soma')) {
-      fraseScofieldEl.textContent = 'Se você estiver lendo isso... o plano já começou.';
-      // Aqui pode tocar um som de alerta (se quiser implementar)
-    }
+    // Status com indicação forte ou fraco
+    statusEl.textContent = ultimoResultado.peso >= 2
+      ? 'Sinal FORTE - prepare-se!'
+      : 'Sinal FRACO - aposte com cautela.';
   }
 
-  // Carregar dados salvos ao iniciar
-  function carregar() {
-    const salvo = carregarLocal();
-    if(salvo) {
-      historicoEl.value = salvo.historico || '';
-      sinalManual = salvo.sinais || {anterior:false, branco:false, posterior:false};
-      [btnAnterior, btnBranco, btnPosterior].forEach((btn, i) => {
-        const key = ['anterior', 'branco', 'posterior'][i];
-        if(sinalManual[key]) {
-          btn.classList.add('active');
-          btn.setAttribute('aria-pressed', 'true');
-        } else {
-          btn.classList.remove('active');
-          btn.setAttribute('aria-pressed', 'false');
-        }
-      });
-      if(historicoEl.value.trim()) {
-        analisar();
-      }
-    }
+  // Ajustar peso da estratégia com base em feedback
+  function feedbackAcertou() {
+    if(!ultimoResultado) return;
+    pesosEstrategias[ultimoResultado.id] = (pesosEstrategias[ultimoResultado.id] || 1) + 1;
+    salvarEstrategias();
+    statusEl.textContent = 'Feedback: Acertou! Peso da estratégia aumentado.';
+    btnAcertou.disabled = true;
+    btnErrou.disabled = true;
+  }
+  function feedbackErrou() {
+    if(!ultimoResultado) return;
+    pesosEstrategias[ultimoResultado.id] = Math.max(0, (pesosEstrategias[ultimoResultado.id] || 1) - 1);
+    salvarEstrategias();
+    statusEl.textContent = 'Feedback: Errou. Peso da estratégia reduzido.';
+    btnAcertou.disabled = true;
+    btnErrou.disabled = true;
   }
 
-  btnAnalisar.addEventListener('click', analisar);
+  // Detecção simples de REC e chuva de brancos (baseado em intervalo)
+  function detectarRecOuChuva() {
+    if(historicoDados.length === 0) return '';
 
-  carregar();
+    const brancos = historicoDados.filter(d => d.cor === 'branco').sort((a,b)=>a.horario-b.horario);
+    if(brancos.length < 2) return '';
+
+    const ultimoBranco = brancos[brancos.length -1];
+    const penultimoBranco = brancos[brancos.length -2];
+    const intervaloSeg = (ultimoBranco.horario - penultimoBranco.horario)/1000;
+
+    if(intervaloSeg <= 90) return '🌧️ Chuva de brancos detectada!';
+
+    if(intervaloSeg >= 180 && intervaloSeg <= 300) return '🔄 REC detectada!';
+
+    return '';
+  }
+
+  // Inicializar
+  function init() {
+    carregarEstrategias();
+    btnAnalisarHistorico.onclick = analisarHistorico;
+    btnLimparTudo.onclick = limparTudo;
+    btnAnalisarSinal.onclick = analisarSinalManual;
+    btnAcertou.onclick = feedbackAcertou;
+    btnErrou.onclick = feedbackErrou;
+
+    outputEl.textContent = 'Cole o histórico e clique em "Analisar Histórico" para começar.';
+    statusEl.textContent = '';
+  }
+
+  init();
+
 })();
 </script>
 
+</main>
 </body>
 </html>
