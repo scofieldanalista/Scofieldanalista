@@ -1,97 +1,7 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scofield Analista</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #eee;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 {
-      text-align: center;
-      color: #f5a623;
-    }
-    .container {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-    .pedra {
-      background: #222;
-      border-radius: 12px;
-      padding: 15px;
-      width: 130px;
-      text-align: center;
-    }
-    .cor-quadrado {
-      font-size: 70px;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
-    label {
-      font-size: 14px;
-      margin-top: 5px;
-      display: block;
-    }
-    input[type="number"],
-    input[type="time"] {
-      width: 100%;
-      padding: 6px 8px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      margin-top: 4px;
-    }
-    button {
-      margin: 10px 8px 0 0;
-      padding: 12px 22px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      background: #f5a623;
-      color: #111;
-    }
-    #resultado {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: 700;
-      color: #f5a623;
-      text-align: center;
-      min-height: 50px;
-    }
-    #confiança, #avisos {
-      font-weight: 600;
-      margin-top: 8px;
-      text-align: center;
-    }
-    #log {
-      margin-top: 20px;
-      max-height: 230px;
-      overflow-y: auto;
-      background: #222;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 1.3;
-      color: #ccc;
-    }
-  </style>
-</head>
-<body>
-  <h2>Scofield Analista - Blaze Double</h2>
-  <div id="app">Carregando aplicação...</div>
 <script>
   const app = document.getElementById('app');
   const resultados = JSON.parse(localStorage.getItem('resultados') || '[]');
+  const feedbacks = JSON.parse(localStorage.getItem('feedbacks') || '{}');
   let ultimoPrevisto = null;
 
   function horaParaMinutos(hora) {
@@ -106,7 +16,6 @@
   }
 
   function salvarResultado(esq, meio, dir) {
-    // Validação simples dos campos para evitar salvar vazio
     if (!esq.numero || !esq.horario || !dir.numero || !dir.horario || !meio.horario) {
       alert('Preencha todos os números e horários, exceto o branco que não tem número.');
       return;
@@ -123,9 +32,11 @@
       logDiv.innerHTML = 'Nenhum resultado salvo ainda.';
       return;
     }
-    logDiv.innerHTML = resultados.map((r, i) => 
-      `${i + 1}. ${r.esq.cor} ${r.esq.numero} ${r.esq.horario} | 🎲 ${r.meio.horario} | ${r.dir.cor} ${r.dir.numero} ${r.dir.horario}`
-    ).join('<br>');
+    logDiv.innerHTML = resultados.map((r, i) => {
+      let feedback = feedbacks[i];
+      let emoji = feedback === 'acerto' ? '✅' : feedback === 'erro' ? '❌' : '';
+      return `${i + 1}. ${r.esq.cor} ${r.esq.numero} ${r.esq.horario} | 🎲 ${r.meio.horario} | ${r.dir.cor} ${r.dir.numero} ${r.dir.horario} ${emoji}`;
+    }).join('<br>');
   }
 
   function calcularConfiança(media, intervalos, brancos) {
@@ -155,7 +66,7 @@
     }
 
     const ultimoBranco = brancos[brancos.length - 1];
-    let mediaIntervalo = 6; // padrão caso não tenha intervalo para calcular
+    let mediaIntervalo = 6;
 
     if (brancos.length >= 2) {
       const intervalos = [];
@@ -175,13 +86,35 @@
     document.getElementById('confiança').textContent = conf.text;
     document.getElementById('confiança').style.color = conf.color;
 
-    document.getElementById('avisos').textContent = '';
+    // Mostrar botões de feedback
+    document.getElementById('avisos').innerHTML = `
+      <button id="btnAcertou" style="margin-right:10px;">✅ Acertou</button>
+      <button id="btnErrou">❌ Errou</button>
+    `;
+
+    document.getElementById('btnAcertou').onclick = () => {
+      feedbacks[resultados.length - 1] = 'acerto';
+      localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+      alert('Feedback de ACERTO registrado!');
+      atualizarLog();
+      document.getElementById('avisos').innerHTML = '';
+    };
+
+    document.getElementById('btnErrou').onclick = () => {
+      feedbacks[resultados.length - 1] = 'erro';
+      localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+      alert('Feedback de ERRO registrado!');
+      atualizarLog();
+      document.getElementById('avisos').innerHTML = '';
+    };
   }
 
   function limparHistorico() {
     if (!confirm('Tem certeza que deseja limpar todo o histórico?')) return;
     localStorage.removeItem('resultados');
+    localStorage.removeItem('feedbacks');
     resultados.length = 0;
+    for (const key in feedbacks) delete feedbacks[key];
     atualizarLog();
     document.getElementById('resultado').textContent = '';
     document.getElementById('confiança').textContent = '';
@@ -224,7 +157,6 @@
       <div id="log"></div>
     `;
 
-    // Função para alternar as cores quando clicar no quadrado (esquerda e direita)
     function toggleCor(element) {
       const cores = ['🔴', '⚫', '⚪'];
       let atual = element.textContent.trim();
