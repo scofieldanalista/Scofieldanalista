@@ -1,78 +1,89 @@
-function analisar() {
-  if (resultados.length < 1) {
-    alert('Salve pelo menos 1 resultado para começar a análise.');
-    return;
-  }
-
-  const brancos = resultados
-    .map(r => horaParaMinutos(r.meio.horario))
-    .filter(v => v !== null)
-    .sort((a, b) => a - b);
-
-  if (brancos.length === 0) {
-    alert('Nenhum horário válido do branco encontrado para análise.');
-    return;
-  }
-
-  const ultimoBranco = brancos[brancos.length - 1];
-  let mediaIntervalo = 6;
-
-  if (brancos.length >= 2) {
-    const intervalos = [];
-    for (let i = 1; i < brancos.length; i++) {
-      intervalos.push(brancos[i] - brancos[i - 1]);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scofield Analista - Blaze Double</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+      user-select: none;
     }
-    mediaIntervalo = intervalos.reduce((a, b) => a + b, 0) / intervalos.length;
-  }
-
-  const previsto = Math.round(ultimoBranco + mediaIntervalo);
-  const previstoHora = minutosParaHora(previsto);
-  ultimoPrevisto = previsto;
-
-  document.getElementById('resultado').textContent = `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${previstoHora} — PREPARA!`;
-
-  const conf = calcularConfiança(mediaIntervalo, [], brancos);
-  document.getElementById('confiança').textContent = conf.text;
-  document.getElementById('confiança').style.color = conf.color;
-
-  // Detecção de chuva de brancos:
-  // Conta quantos brancos saíram nos últimos 5 minutos antes do último branco
-  let chuvaCount = 0;
-  for (let i = brancos.length - 1; i >= 0; i--) {
-    if (ultimoBranco - brancos[i] <= 5) {
-      chuvaCount++;
-    } else {
-      break;
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #f39c12;
+      text-shadow: 0 0 5px #f39c12;
     }
-  }
-
-  if (chuvaCount >= 2) {
-    document.getElementById('avisos').innerHTML = `<span style="color: #3498db; font-weight:bold;">☔️ CHUVA DE BRANCOS DETECTADA: ${chuvaCount} brancos nos últimos 5 minutos!</span>`;
-  } else {
-    document.getElementById('avisos').innerHTML = '';
-  }
-
-  // Botões feedback como antes:
-  document.getElementById('avisos').innerHTML += `
-    <div style="margin-top:10px;">
-      <button id="btnAcertou" style="margin-right:10px;">✅ Acertou</button>
-      <button id="btnErrou">❌ Errou</button>
-    </div>
-  `;
-
-  document.getElementById('btnAcertou').onclick = () => {
-    feedbacks[resultados.length - 1] = 'acerto';
-    localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
-    alert('Feedback de ACERTO registrado!');
-    atualizarLog();
-    document.getElementById('avisos').innerHTML = '';
-  };
-
-  document.getElementById('btnErrou').onclick = () => {
-    feedbacks[resultados.length - 1] = 'erro';
-    localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
-    alert('Feedback de ERRO registrado!');
-    atualizarLog();
-    document.getElementById('avisos').innerHTML = '';
-  };
-}
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .pedra {
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      width: 120px;
+      text-align: center;
+      box-shadow: 0 0 8px #555;
+    }
+    .cor-quadrado {
+      font-size: 36px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      user-select: none;
+    }
+    input[type="number"], input[type="time"] {
+      width: 100%;
+      padding: 5px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 18px;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #f39c12;
+      color: #111;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 6px #f39c12;
+      user-select: none;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #d47f07;
+    }
+    #resultado, #confiança, #avisos {
+      margin-top: 15px;
+      font-size: 18px;
+      text-align: center;
+      font-weight: bold;
+    }
+    #log {
+      margin-top: 25px;
+      font-size: 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #222;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: inset 0 0 8px #555;
+      user-select: text;
+    }
+  </style>
+</head>
+<body>
+  <h2>Scofield Analista - Blaze Double</h2>
+  <div id="app">Carregando aplicação...</div>
