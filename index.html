@@ -1,121 +1,113 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>Scofield Analista - Previsão Branco com Alerta 5min</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
-  label, select, input { margin: 5px 0; display: block; }
-  button { margin-top: 10px; padding: 10px; }
-  #log { margin-top: 20px; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; }
-  .alert { color: #f33; font-weight: bold; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Scofield Analista - Previsão Branco</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
+    button { margin: 5px; padding: 12px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; }
+    .vermelho { background: #c0392b; color: white; }
+    .preto { background: #000; color: white; }
+    .branco { background: #ecf0f1; color: #000; border: 1px solid #ccc; }
+    #log { margin-top: 20px; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; }
+    #prediction { margin-top: 20px; }
+  </style>
 </head>
 <body>
 
-<h1>Scofield Analista - Previsão Branco com Alerta 5min</h1>
+<h1>Scofield Analista - Previsão Branco (5 min antes)</h1>
 
-<form id="inputForm">
-  <label for="timeInput">Horário (HH:MM):</label>
-  <input type="time" id="timeInput" required />
-
-  <label for="colorInput">Cor:</label>
-  <select id="colorInput" required>
-    <option value="">Selecione</option>
-    <option value="vermelho">Vermelho</option>
-    <option value="preto">Preto</option>
-    <option value="branco">Branco</option>
-  </select>
-
-  <button type="submit">Adicionar</button>
-</form>
+<div>
+  <button class="vermelho" onclick="addCor('vermelho')">🔴 Vermelho</button>
+  <button class="preto" onclick="addCor('preto')">⚫ Preto</button>
+  <button class="branco" onclick="addCor('branco')">⚪ Branco</button>
+</div>
 
 <div id="log"></div>
 <div id="prediction"></div>
 
 <script>
-  const inputForm = document.getElementById('inputForm');
   const logDiv = document.getElementById('log');
   const predictionDiv = document.getElementById('prediction');
   let results = JSON.parse(localStorage.getItem('results')) || [];
 
-  function timeToMinutes(t) {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-  }
+  let parcial = []; // Guarda as duas cores do mesmo minuto
+  let minutoAtual = results.length ? results[results.length - 1].minuto + 1 : 0;
 
-  function minutesToTime(min) {
-    const h = Math.floor(min / 60);
-    const m = min % 60;
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  function addCor(cor) {
+    parcial.push(cor);
+
+    if (parcial.length === 2) {
+      // Salva as duas cores como um registro do mesmo minuto
+      results.push({
+        minuto: minutoAtual,
+        cores: [...parcial]
+      });
+      parcial = [];
+      minutoAtual++;
+      localStorage.setItem('results', JSON.stringify(results));
+      updateLog();
+      predictNextWhite();
+    }
   }
 
   function updateLog() {
     logDiv.innerHTML = '';
     results.forEach(r => {
-      logDiv.innerHTML += `<div>${r.time} - <strong>${r.color}</strong></div>`;
+      const coresStr = r.cores.map(c => {
+        if (c === 'vermelho') return '🔴';
+        if (c === 'preto') return '⚫';
+        if (c === 'branco') return '⚪';
+      }).join(' ');
+      logDiv.innerHTML += `<div>Minuto ${r.minuto}: ${coresStr}</div>`;
     });
   }
 
-  function calcAverageInterval() {
-    const whiteTimes = results
-      .filter(r => r.color === 'branco')
-      .map(r => timeToMinutes(r.time))
-      .sort((a,b) => a-b);
-
-    if (whiteTimes.length < 2) return null;
-
-    let intervals = [];
-    for (let i=1; i<whiteTimes.length; i++) {
-      intervals.push(whiteTimes[i] - whiteTimes[i-1]);
-    }
-    const avg = intervals.reduce((a,b) => a+b, 0) / intervals.length;
-    return avg;
-  }
-
   function predictNextWhite() {
-    const avgInterval = calcAverageInterval();
-    if (!avgInterval) {
-      predictionDiv.textContent = 'Ainda não há dados suficientes para previsão.';
+    const brancos = results.filter(r => r.cores.includes('branco'));
+
+    if (brancos.length < 2) {
+      predictionDiv.innerHTML = '⚠️ Dados insuficientes para prever o branco.';
       return null;
     }
 
-    const lastTimeMin = timeToMinutes(results[results.length -1].time);
-    const lastWhiteEntry = [...results].reverse().find(r => r.color === 'branco');
-    if (!lastWhiteEntry) {
-      predictionDiv.textContent = 'Ainda não há registro de branco para basear previsão.';
-      return null;
+    // Calcula a média de minutos entre brancos
+    let intervalos = [];
+    for (let i = 1; i < brancos.length; i++) {
+      intervalos.push(brancos[i].minuto - brancos[i - 1].minuto);
     }
-    const lastWhiteMin = timeToMinutes(lastWhiteEntry.time);
+    const media = intervalos.reduce((a, b) => a + b, 0) / intervalos.length;
 
-    const predictedWhiteMin = lastWhiteMin + avgInterval;
-    const nowMin = lastTimeMin;
+    const ultimoBranco = brancos[brancos.length - 1].minuto;
+    const previsto = Math.round(ultimoBranco + media);
+    const agora = minutoAtual;
 
-    const diff = predictedWhiteMin - nowMin;
+    const falta = previsto - agora;
 
     predictionDiv.innerHTML = `
-      <p>Intervalo médio entre brancos: ${avgInterval.toFixed(1)} minutos</p>
-      <p>Próximo branco previsto para: <strong>${minutesToTime(predictedWhiteMin)}</strong> (em ${diff.toFixed(1)} minutos)</p>
+      <p>🧠 Média entre brancos: ${media.toFixed(1)} minutos</p>
+      <p>📅 Próximo branco previsto: <strong>Minuto ${previsto}</strong></p>
+      <p>⏰ Faltam: <strong>${falta}</strong> minuto(s)</p>
     `;
 
-    return { predictedWhiteMin, diff };
+    return { previsto, falta };
   }
 
   function startAlertCountdown() {
-    const alertBeforeMinutes = 5; // alerta 5 minutos antes
+    const alertaMinutosAntes = 5;
 
-    function checkAlert() {
-      const prediction = predictNextWhite();
-      if (!prediction) return;
+    function checar() {
+      const pred = predictNextWhite();
+      if (!pred) return;
 
-      if (prediction.diff <= alertBeforeMinutes && prediction.diff > 0) {
-        alert('Alerta: Branco previsto em 5 minutos!');
+      if (pred.falta <= alertaMinutosAntes && pred.falta > 0) {
+        alert(`⚠️ ALERTA: Branco previsto em ${pred.falta} minutos!`);
         playAlertSound();
-        clearInterval(alertInterval);
+        clearInterval(intervalo);
       }
     }
 
-    const alertInterval = setInterval(checkAlert, 5000);
+    const intervalo = setInterval(checar, 5000);
   }
 
   function playAlertSound() {
@@ -128,25 +120,10 @@
     oscillator.stop(audioCtx.currentTime + 0.5);
   }
 
-  inputForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const time = document.getElementById('timeInput').value;
-    const color = document.getElementById('colorInput').value;
-    if (!time || !color) return;
-
-    results.push({ time, color });
-    results.sort((a,b) => timeToMinutes(a.time) - timeToMinutes(b.time));
-    localStorage.setItem('results', JSON.stringify(results));
-    updateLog();
-    predictNextWhite();
-
-    inputForm.reset();
-  });
-
+  // Início
   updateLog();
   predictNextWhite();
   startAlertCountdown();
-
 </script>
 
 </body>
