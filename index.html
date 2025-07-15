@@ -4,8 +4,150 @@
 <meta charset="UTF-8" />
 <title>Scofield Analista - Previsão Branco com Alerta 5min</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
+  body { font-family: Arial, sans-serif; background: #fff; color: #000; padding: 20px; }
   label, select, input { margin: 5px 0; display: block; }
   button { margin-top: 10px; padding: 10px; }
-  #log { margin-top: 20px; max-height: 200px; overflow-y: auto; background: #222; padding: 10px; }
-  .alert { color: #f33; font-weig
+  #log { margin-top: 20px; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; }
+  .alert { color: #f33; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Scofield Analista - Previsão Branco com Alerta 5min</h1>
+
+<form id="inputForm">
+  <label for="timeInput">Horário (HH:MM):</label>
+  <input type="time" id="timeInput" required />
+
+  <label for="colorInput">Cor:</label>
+  <select id="colorInput" required>
+    <option value="">Selecione</option>
+    <option value="vermelho">Vermelho</option>
+    <option value="preto">Preto</option>
+    <option value="branco">Branco</option>
+  </select>
+
+  <button type="submit">Adicionar</button>
+</form>
+
+<div id="log"></div>
+<div id="prediction"></div>
+
+<script>
+  const inputForm = document.getElementById('inputForm');
+  const logDiv = document.getElementById('log');
+  const predictionDiv = document.getElementById('prediction');
+  let results = JSON.parse(localStorage.getItem('results')) || [];
+
+  function timeToMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function minutesToTime(min) {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  function updateLog() {
+    logDiv.innerHTML = '';
+    results.forEach(r => {
+      logDiv.innerHTML += `<div>${r.time} - <strong>${r.color}</strong></div>`;
+    });
+  }
+
+  function calcAverageInterval() {
+    const whiteTimes = results
+      .filter(r => r.color === 'branco')
+      .map(r => timeToMinutes(r.time))
+      .sort((a,b) => a-b);
+
+    if (whiteTimes.length < 2) return null;
+
+    let intervals = [];
+    for (let i=1; i<whiteTimes.length; i++) {
+      intervals.push(whiteTimes[i] - whiteTimes[i-1]);
+    }
+    const avg = intervals.reduce((a,b) => a+b, 0) / intervals.length;
+    return avg;
+  }
+
+  function predictNextWhite() {
+    const avgInterval = calcAverageInterval();
+    if (!avgInterval) {
+      predictionDiv.textContent = 'Ainda não há dados suficientes para previsão.';
+      return null;
+    }
+
+    const lastTimeMin = timeToMinutes(results[results.length -1].time);
+    const lastWhiteEntry = [...results].reverse().find(r => r.color === 'branco');
+    if (!lastWhiteEntry) {
+      predictionDiv.textContent = 'Ainda não há registro de branco para basear previsão.';
+      return null;
+    }
+    const lastWhiteMin = timeToMinutes(lastWhiteEntry.time);
+
+    const predictedWhiteMin = lastWhiteMin + avgInterval;
+    const nowMin = lastTimeMin;
+
+    const diff = predictedWhiteMin - nowMin;
+
+    predictionDiv.innerHTML = `
+      <p>Intervalo médio entre brancos: ${avgInterval.toFixed(1)} minutos</p>
+      <p>Próximo branco previsto para: <strong>${minutesToTime(predictedWhiteMin)}</strong> (em ${diff.toFixed(1)} minutos)</p>
+    `;
+
+    return { predictedWhiteMin, diff };
+  }
+
+  function startAlertCountdown() {
+    const alertBeforeMinutes = 5; // alerta 5 minutos antes
+
+    function checkAlert() {
+      const prediction = predictNextWhite();
+      if (!prediction) return;
+
+      if (prediction.diff <= alertBeforeMinutes && prediction.diff > 0) {
+        alert('Alerta: Branco previsto em 5 minutos!');
+        playAlertSound();
+        clearInterval(alertInterval);
+      }
+    }
+
+    const alertInterval = setInterval(checkAlert, 5000);
+  }
+
+  function playAlertSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.5);
+  }
+
+  inputForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const time = document.getElementById('timeInput').value;
+    const color = document.getElementById('colorInput').value;
+    if (!time || !color) return;
+
+    results.push({ time, color });
+    results.sort((a,b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+    localStorage.setItem('results', JSON.stringify(results));
+    updateLog();
+    predictNextWhite();
+
+    inputForm.reset();
+  });
+
+  updateLog();
+  predictNextWhite();
+  startAlertCountdown();
+
+</script>
+
+</body>
+</html>
