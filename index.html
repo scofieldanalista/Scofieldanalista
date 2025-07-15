@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Scofield Analista Avançado</title>
+  <title>Scofield Analista com Feedback</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -134,11 +134,20 @@
     #status.fraco {
       color: #7f8c8d;
     }
+    #feedback-area {
+      margin-top: 20px;
+      text-align: center;
+      user-select: none;
+    }
+    #feedback-area button {
+      background-color: #2980b9;
+      margin: 8px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Scofield Analista Avançado</h1>
+  <h1>Scofield Analista com Feedback</h1>
 
   <div class="container">
     <div class="pedra" id="pedra-esq">
@@ -174,6 +183,13 @@
 
   <div id="resultado"></div>
   <div id="status"></div>
+
+  <div id="feedback-area" style="display:none;">
+    <p>Acertou a previsão?</p>
+    <button id="btn-feedback-sim">Sim</button>
+    <button id="btn-feedback-nao">Não</button>
+  </div>
+
   <div id="log"></div>
 
   <script>
@@ -198,7 +214,18 @@
       atualizaCor(corDirDiv, corDirIndex);
     });
 
+    // Pesos iniciais para padrões e soma (ajustáveis via feedback)
+    let pesos = {
+      somaMax: 40,
+      ptsDuplo: 30,
+      ptsDentado: 20,
+      ptsBanguela: 10
+    };
+
+    // Histórico e resultados guardados localmente
     let resultados = JSON.parse(localStorage.getItem('resultados')) || [];
+    let feedbacks = JSON.parse(localStorage.getItem('feedbacks')) || [];
+    let taxaAcerto = localStorage.getItem('taxaAcerto') || 0;
 
     function salvaResultado() {
       const numEsq = Number(document.getElementById('num-esq').value);
@@ -227,6 +254,7 @@
       document.getElementById('resultado').textContent = '';
       document.getElementById('status').textContent = '';
       document.getElementById('status').className = '';
+      document.getElementById('feedback-area').style.display = 'none';
     }
 
     function atualizaLog() {
@@ -266,6 +294,7 @@
       return `${h}:${m}`;
     }
 
+    // Detecta padrões (Duplo, Dentado, Banguela)
     function detectarPadroesBranco() {
       const brancos = resultados.map((r, i) => ({
         index: i,
@@ -275,9 +304,10 @@
       let padroes = [];
       for(let i=0; i < brancos.length -1; i++) {
         const diff = brancos[i+1].horarioMin - brancos[i].horarioMin;
-        if(diff === 1) padroes.push(`Duplo: ${minutosParaHora(brancos[i].horarioMin)} e ${minutosParaHora(brancos[i+1].horarioMin)}`);
-        else if(diff === 2) padroes.push(`Dentado: branco ${minutosParaHora(brancos[i].horarioMin)}, pedra, branco ${minutosParaHora(brancos[i+1].horarioMin)}`);
-        else if(diff <= 4) padroes.push(`Banguela: branco ${minutosParaHora(brancos[i].horarioMin)} até ${minutosParaHora(brancos[i+1].horarioMin)}`);
+        if(diff === 1) padroes.push('duplo');
+        else if(diff === 2) padroes.push('dentado');
+        else if(diff <= 4) padroes.push('banguela');
+        else padroes.push('nenhum');
       }
       return padroes;
     }
@@ -292,39 +322,38 @@
       return soma / (brancos.length -1);
     }
 
-    // Nova função para calcular confiança da previsão
-    function calcularConfianca(resultado) {
-      // Soma dos números das pedras ao redor do branco
+    // Calcula confiança com pesos ajustados
+    function calcularConfianca(resultado, padrao) {
       const somaNums = resultado.esquerda.numero + resultado.direita.numero;
+      let ptsSoma = Math.min(somaNums * 2, pesos.somaMax);
 
-      // Peso da soma dos números (máximo 40 pontos)
-      let ptsSoma = Math.min(somaNums * 2, 40); // Limite 40 pontos
-
-      // Detecta se o padrão atual é duplo, dentado ou banguela (0 a 30 pontos)
       let ptsPadrao = 0;
-      const ultimo = resultados[resultados.length - 1];
-      if(resultados.length >= 2) {
-        const penultimo = resultados[resultados.length - 2];
-        const diff = horaParaMinutos(ultimo.meio.horario) - horaParaMinutos(penultimo.meio.horario);
-        if(diff === 1) ptsPadrao = 30;      // Duplo: pontuação máxima
-        else if(diff === 2) ptsPadrao = 20; // Dentado: pontuação média
-        else if(diff <= 4) ptsPadrao = 10;  // Banguela: pontuação menor
-      }
+      if(padrao === 'duplo') ptsPadrao = pesos.ptsDuplo;
+      else if(padrao === 'dentado') ptsPadrao = pesos.ptsDentado;
+      else if(padrao === 'banguela') ptsPadrao = pesos.ptsBanguela;
 
-      // Peso baseado na regularidade dos intervalos (0 a 30 pontos)
       const media = mediaIntervaloBrancos();
       let ptsIntervalo = 0;
-      if(media !== null) {
-        const diffAtual = horaParaMinutos(resultado.meio.horario) - horaParaMinutos(resultados[resultados.length - 2]?.meio.horario || resultado.meio.horario);
+      if(media !== null && resultados.length > 1) {
+        const diffAtual = horaParaMinutos(resultado.meio.horario) - horaParaMinutos(resultados[resultados.length - 2].meio.horario);
         const difAbs = Math.abs(diffAtual - media);
-        ptsIntervalo = Math.max(0, 30 - difAbs * 10); // Penaliza muito se estiver longe da média
+        ptsIntervalo = Math.max(0, 30 - difAbs * 10);
       }
 
-      // Total pontuação até 100 pontos
       const total = ptsSoma + ptsPadrao + ptsIntervalo;
       return Math.min(total, 100);
     }
 
+    // Previsão do próximo branco
+    function preverProximoBranco() {
+      const media = mediaIntervaloBrancos();
+      if(media === null) return 'Dados insuficientes para previsão.';
+      const ultBranco = horaParaMinutos(resultados[resultados.length - 1].meio.horario);
+      const previsto = Math.round(ultBranco + media);
+      return minutosParaHora(previsto);
+    }
+
+    // Mostra análise e ativa feedback
     function analisarDados() {
       if(resultados.length === 0) {
         alert('Nenhum dado para analisar.');
@@ -332,12 +361,10 @@
       }
 
       const padroes = detectarPadroesBranco();
-      const previsaoText = preverProximoBranco();
+      const ultimoPadrao = padroes.length > 0 ? padroes[padroes.length - 1] : 'nenhum';
+      const ultimoResultado = resultados[resultados.length - 1];
+      const confianca = calcularConfianca(ultimoResultado, ultimoPadrao);
 
-      // Calcula confiança do último resultado
-      const confianca = calcularConfianca(resultados[resultados.length - 1]);
-
-      // Define status textual e visual baseado na confiança
       let statusTexto = '';
       let statusClass = '';
       if(confianca >= 75) {
@@ -352,32 +379,60 @@
         statusClass = 'fraco';
       }
 
-      // Extrai horário previsto do texto para mensagem principal
-      let horaAlvo = previsaoText.match(/\d{2}:\d{2}/);
-      let frase = horaAlvo
-        ? `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${horaAlvo[0]} — PREPARA!`
-        : previsaoText;
+      const proxBrancoHora = preverProximoBranco();
+      const frase = `🕓 PRÓXIMO BRANCO PROVÁVEL EM ${proxBrancoHora} — PREPARA!`;
 
-      // Monta resultado visual
-      let html = `<div style="font-size: 22px; color: #d63031; margin-bottom: 12px;">${frase}</div>`;
-      if(padroes.length) {
-        html += '<strong>Padrões detectados:</strong><br>' + padroes.join('<br>');
-      } else {
-        html += '<br><em>Nenhum padrão especial detectado.</em>';
-      }
-
-      document.getElementById('resultado').innerHTML = html;
+      document.getElementById('resultado').textContent = frase;
       const statusDiv = document.getElementById('status');
       statusDiv.textContent = statusTexto;
       statusDiv.className = statusClass;
+
+      // Exibe feedback
+      document.getElementById('feedback-area').style.display = 'block';
     }
 
-    function preverProximoBranco() {
-      const media = mediaIntervaloBrancos();
-      if(media === null) return 'Dados insuficientes para previsão.';
-      const ultBranco = horaParaMinutos(resultados[resultados.length - 1].meio.horario);
-      const previsto = Math.round(ultBranco + media);
-      return `Próximo branco provável por volta das ${minutosParaHora(previsto)}`;
+    // Ajusta pesos com base no feedback
+    function ajustarPesos(acertou) {
+      const delta = 2;
+      if(acertou) {
+        pesos.somaMax = Math.min(pesos.somaMax + delta, 50);
+        pesos.ptsDuplo = Math.min(pesos.ptsDuplo + delta, 40);
+        pesos.ptsDentado = Math.min(pesos.ptsDentado + delta, 30);
+        pesos.ptsBanguela = Math.min(pesos.ptsBanguela + delta, 20);
+      } else {
+        pesos.somaMax = Math.max(pesos.somaMax - delta, 20);
+        pesos.ptsDuplo = Math.max(pesos.ptsDuplo - delta, 10);
+        pesos.ptsDentado = Math.max(pesos.ptsDentado - delta, 5);
+        pesos.ptsBanguela = Math.max(pesos.ptsBanguela - delta, 0);
+      }
+      salvarPesos();
+    }
+
+    function salvarPesos() {
+      localStorage.setItem('pesos', JSON.stringify(pesos));
+    }
+
+    function carregarPesos() {
+      const p = JSON.parse(localStorage.getItem('pesos'));
+      if(p) {
+        pesos = p;
+      }
+    }
+
+    // Registra feedback, atualiza taxa de acerto e pesos
+    function registrarFeedback(acertou) {
+      feedbacks.push(acertou);
+      localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+      const total = feedbacks.length;
+      const acertos = feedbacks.filter(f => f).length;
+      taxaAcerto = (acertos / total) * 100;
+      localStorage.setItem('taxaAcerto', taxaAcerto);
+      ajustarPesos(acertou);
+      alert(`Feedback registrado! Taxa de acerto atual: ${taxaAcerto.toFixed(2)}%`);
+      document.getElementById('feedback-area').style.display = 'none';
+      document.getElementById('resultado').textContent = '';
+      document.getElementById('status').textContent = '';
+      document.getElementById('status').className = '';
     }
 
     function playAlerta() {
@@ -389,9 +444,7 @@
         osc.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 0.7);
-      } catch {
-        // Caso navegador bloqueie áudio
-      }
+      } catch {}
     }
 
     document.getElementById('btn-salvar').addEventListener('click', salvaResultado);
@@ -399,17 +452,5 @@
     document.getElementById('btn-limpar').addEventListener('click', () => {
       if(confirm("Tem certeza que quer apagar todo o histórico?")) {
         resultados = [];
-        localStorage.removeItem('resultados');
-        atualizaLog();
-        document.getElementById('resultado').textContent = '';
-        document.getElementById('status').textContent = '';
-        document.getElementById('status').className = '';
-      }
-    });
-
-    atualizaCor(corEsqDiv, corEsqIndex);
-    atualizaCor(corDirDiv, corDirIndex);
-    atualizaLog();
-  </script>
-</body>
-</html>
+        feedbacks = [];
+        taxaAcerto = 0
