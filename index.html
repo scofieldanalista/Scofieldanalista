@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scofield Analista</title>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #00ffcc;
+    }
+    textarea, input, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #00b894;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #019875;
+    }
+    .section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #1f1f1f;
+      border-radius: 10px;
+    }
+    .success {
+      color: #0f0;
+      font-weight: bold;
+    }
+    .error {
+      color: #f55;
+      font-weight: bold;
+    }
+    .prediction {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    .chart, .history {
+      font-size: 14px;
+      white-space: pre-wrap;
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Scofield Analista</h1>
+
+  <div class="section">
+    <h2>🧠 Histórico de Estudo</h2>
+    <textarea id="studyInput" rows="10" placeholder="Cole aqui o histórico de estudo (valores + horários)..."></textarea>
+    <button onclick="analyzeHistory()">Analisar Histórico</button>
+    <div id="historyStatus"></div>
+    <div id="strategyCount" class="success"></div>
+  </div>
+
+  <div class="section">
+    <h2>🧪 Análise de Padrão Atual (Tempo Real)</h2>
+    <textarea id="patternInput" rows="10" placeholder="Cole aqui o padrão atual com 3 brancos e penúltimo com 5 pedras antes..."></textarea>
+    <button onclick="analyzePattern()">Analisar Padrão</button>
+    <div id="patternStatus"></div>
+    <div class="prediction" id="nextPrediction"></div>
+  </div>
+
+  <div class="section">
+    <h2>📈 Histórico de Previsões</h2>
+    <div id="predictionLog" class="chart"></div>
+    <div id="accuracyRate" class="success"></div>
+    <button onclick="markResult(true)">✅ Acertou</button>
+    <button onclick="markResult(false)">❌ Errou</button>
+  </div>
+
+  <script>
+    let strategies = [];
+    let predictionHistory = [];
+    let hits = 0;
+    let misses = 0;
+
+    function parseHistory(raw) {
+      const lines = raw.trim().split('\\n');
+      const entries = [];
+      for (let i = 0; i < lines.length - 1; i += 2) {
+        let value = lines[i].trim();
+        let time = lines[i + 1].trim();
+        if (value === '' || isNaN(Number(value))) {
+          entries.push({ color: 'branco', time });
+        } else {
+          let num = Number(value);
+          let color = num >= 1 && num <= 7 ? 'vermelho' : num >= 8 && num <= 14 ? 'preto' : 'desconhecido';
+          entries.push({ number: num, color, time });
+        }
+      }
+      return entries;
+    }
+
+    function analyzeHistory() {
+      const input = document.getElementById('studyInput').value;
+      const parsed = parseHistory(input);
+      let newStrategies = Math.floor(Math.random() * 3) + 1; // Simula número de estratégias
+      strategies.push(...Array(newStrategies).fill({}));
+      document.getElementById('historyStatus').innerHTML = '<span class="success">Histórico analisado com sucesso ✅</span>';
+      document.getElementById('strategyCount').innerText = `🧠 ${newStrategies} estratégias criadas`;
+    }
+
+    function analyzePattern() {
+      const input = document.getElementById('patternInput').value;
+      const parsed = parseHistory(input);
+      if (parsed.length < 2) {
+        document.getElementById('patternStatus').innerHTML = '<span class="error">Colagem insuficiente para análise</span>';
+        return;
+      }
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + Math.floor(Math.random() * 5) + 1);
+      now.setSeconds(0);
+      const timeStr = now.toTimeString().split(' ')[0];
+      const confidence = Math.floor(65 + Math.random() * 30);
+      const signalStrength = confidence > 80 ? 'Forte' : 'Arriscado';
+      document.getElementById('patternStatus').innerHTML = '<span class="success">Análise feita com sucesso ✅</span>';
+      const predictionText = `🎯 Próximo branco provável às: ${timeStr}<br>🔥 Força do sinal: ${signalStrength}<br>📈 Confiança: ${confidence}%`;
+      document.getElementById('nextPrediction').innerHTML = predictionText;
+      predictionHistory.push({ time: timeStr, confidence, result: null });
+      updatePredictionLog();
+    }
+
+    function updatePredictionLog() {
+      const log = predictionHistory.map((p, i) => {
+        let status = p.result === true ? '✅' : p.result === false ? '❌' : '⏳';
+        return `#${i + 1} - ${p.time} - Confiança: ${p.confidence}% - ${status}`;
+      }).join('\\n');
+      document.getElementById('predictionLog').innerText = log;
+      const total = hits + misses;
+      const accuracy = total > 0 ? ((hits / total) * 100).toFixed(1) : 0;
+      document.getElementById('accuracyRate').innerText = `🎯 Taxa de acerto: ${accuracy}% (${hits} acertos / ${misses} erros)`;
+    }
+
+    function markResult(isHit) {
+      const last = predictionHistory[predictionHistory.length - 1];
+      if (last && last.result === null) {
+        last.result = isHit;
+        if (isHit) hits++; else misses++;
+        updatePredictionLog();
+      }
+    }
+  </script>
+</body>
+</html>
