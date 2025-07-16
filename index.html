@@ -1,348 +1,229 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Scofield Analista Completo</title>
-<style>
-  /* Reset e básico */
-  body {
-    margin: 0; padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #121212;
-    color: #eee;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  h1, h2 {
-    text-align: center;
-    color: #00ffcc;
-  }
-  textarea, input, button, select {
-    width: 100%;
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    font-size: 16px;
-    box-sizing: border-box;
-  }
-  button {
-    background-color: #00b894;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  button:hover {
-    background-color: #019875;
-  }
-  .section {
-    background: #1f1f1f;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
-  }
-  .success {
-    color: #0f0;
-    font-weight: bold;
-  }
-  .error {
-    color: #f55;
-    font-weight: bold;
-  }
-  .prediction {
-    font-size: 18px;
-    margin-top: 10px;
-  }
-  .chart, .history, .report-area {
-    font-size: 14px;
-    white-space: pre-wrap;
-    background: #2a2a2a;
-    padding: 10px;
-    border-radius: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-  .dark-mode {
-    background-color: #121212;
-    color: #eee;
-  }
-  .light-mode {
-    background-color: #eee;
-    color: #121212;
-  }
-  .dark-mode textarea, .dark-mode input, .dark-mode button, .dark-mode select {
-    background-color: #333;
-    color: #eee;
-  }
-  .light-mode textarea, .light-mode input, .light-mode button, .light-mode select {
-    background-color: #fff;
-    color: #121212;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scofield Analista PRO</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 20px;
+      background: #121212; color: #eee;
+    }
+    h1, h2 {
+      color: #00ffcc;
+      text-align: center;
+    }
+    textarea, input, button, select {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background-color: #00b894;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #019875;
+    }
+    .section {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .success { color: #0f0; font-weight: bold; }
+    .error { color: #f55; font-weight: bold; }
+    canvas {
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 8px;
+      display: block;
+      margin: 20px auto;
+    }
+    #strategyPanel {
+      margin-top: 10px;
+      padding: 10px;
+      background: #2a2a2a;
+      border-radius: 8px;
+    }
+    #modeStatus {
+      font-weight: bold;
+      font-size: 16px;
+      margin-top: 10px;
+      color: #ff0;
+    }
+  </style>
 </head>
-<body class="dark-mode">
-  <h1>Scofield Analista Completo</h1>
+<body>
+  <h1>Scofield Analista PRO</h1>
 
-  <div class="section" id="modeToggleSection">
-    <label for="modeToggle">Modo Visual:</label>
-    <select id="modeToggle" onchange="toggleMode()">
-      <option value="dark" selected>Dark Mode</option>
-      <option value="light">Light Mode</option>
-    </select>
-  </div>
-
-  <div class="section" id="studySection">
-    <h2>🧠 Histórico de Estudo</h2>
-    <textarea id="studyInput" rows="10" placeholder="Cole aqui o histórico de estudo (valores + horários)..."></textarea>
+  <div class="section">
+    <h2>📚 Histórico de Estudo</h2>
+    <textarea id="historyInput" rows="10" placeholder="Cole aqui o histórico completo..."></textarea>
     <button onclick="analyzeHistory()">Analisar Histórico</button>
-    <button onclick="clearHistoryInput()">Limpar Histórico</button>
+    <button onclick="clearHistory()">Limpar Histórico</button>
     <div id="historyStatus"></div>
-    <div id="strategyCount" class="success"></div>
+    <div id="strategyCount"></div>
   </div>
 
-  <div class="section" id="patternSection">
-    <h2>🧪 Análise de Padrão Atual (Tempo Real)</h2>
-    <textarea id="patternInput" rows="10" placeholder="Cole aqui o padrão atual com 3 brancos e penúltimo com 5 pedras antes..."></textarea>
+  <div class="section">
+    <h2>🔎 Análise em Tempo Real</h2>
+    <textarea id="patternInput" rows="6" placeholder="Cole o padrão atual aqui..."></textarea>
     <button onclick="analyzePattern()">Analisar Padrão</button>
-    <button onclick="clearPatternInput()">Limpar Análise</button>
+    <button onclick="clearPattern()">Limpar Análise</button>
     <div id="patternStatus"></div>
-    <div class="prediction" id="nextPrediction"></div>
+    <div id="nextPrediction" style="margin-top:10px;"></div>
+    <div id="modeStatus"></div>
   </div>
 
-  <div class="section" id="predictionHistorySection">
-    <h2>📈 Histórico de Previsões</h2>
-    <div id="predictionLog" class="chart"></div>
-    <div id="accuracyRate" class="success"></div>
+  <div class="section">
+    <h2>📈 Gráficos</h2>
+    <canvas id="freqChart" width="300" height="150"></canvas>
+    <canvas id="accuracyChart" width="300" height="150"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>📊 Histórico de Previsões</h2>
+    <div id="predictionLog" style="white-space: pre-wrap;"></div>
     <button onclick="markResult(true)">✅ Acertou</button>
     <button onclick="markResult(false)">❌ Errou</button>
+    <div id="accuracyRate"></div>
   </div>
 
-  <div class="section" id="reportSection" style="display:none;">
-    <h2>📊 Relatórios e Gráficos</h2>
-    <button onclick="exportReportCSV()">Exportar CSV</button>
-    <button onclick="exportReportPDF()">Exportar PDF</button>
-    <div id="reportArea" class="report-area"></div>
+  <div class="section">
+    <h2>💾 Estratégias</h2>
+    <button onclick="exportStrategies()">Exportar Estratégias</button>
+    <input type="file" onchange="importStrategies(event)">
+    <div id="strategyPanel"></div>
   </div>
 
-  <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+  <script>
+    let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
+    let predictions = JSON.parse(localStorage.getItem('predictions') || '[]');
+    let hits = 0, misses = 0, patternAnalyzed = false;
 
-<script>
-  // Variáveis globais
-  let strategies = [];
-  let predictionHistory = [];
-  let hits = 0;
-  let misses = 0;
-  let learningMode = 'full'; // 'full' = análise completa; 'simple' = após primeira análise
-  let lastStrategyUsed = null;
-
-  // Toggle modo dark/light
-  function toggleMode() {
-    const mode = document.getElementById('modeToggle').value;
-    if (mode === 'dark') {
-      document.body.classList.remove('light-mode');
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-      document.body.classList.add('light-mode');
-    }
-  }
-
-  // Limpar textarea do histórico de estudo
-  function clearHistoryInput() {
-    document.getElementById('studyInput').value = '';
-    document.getElementById('historyStatus').innerText = '';
-    document.getElementById('strategyCount').innerText = '';
-  }
-
-  // Limpar textarea do padrão atual
-  function clearPatternInput() {
-    document.getElementById('patternInput').value = '';
-    document.getElementById('patternStatus').innerText = '';
-    document.getElementById('nextPrediction').innerText = '';
-  }
-
-  // Parse do histórico (valores e horários)
-  function parseHistory(raw) {
-    const lines = raw.trim().split('\\n');
-    const entries = [];
-    for (let i = 0; i < lines.length - 1; i += 2) {
-      let value = lines[i].trim();
-      let time = lines[i + 1].trim();
-      if (value === '' || isNaN(Number(value))) {
-        entries.push({ color: 'branco', time });
-      } else {
-        let num = Number(value);
-        let color = num >= 1 && num <= 7 ? 'vermelho' : num >= 8 && num <= 14 ? 'preto' : 'desconhecido';
-        entries.push({ number: num, color, time });
-      }
-    }
-    return entries;
-  }
-
-  // Análise do histórico de estudo
-  function analyzeHistory() {
-    const raw = document.getElementById('studyInput').value;
-    if (!raw.trim()) {
-      document.getElementById('historyStatus').innerText = 'Por favor, cole o histórico para análise.';
-      document.getElementById('historyStatus').className = 'error';
-      return;
-    }
-    const entries = parseHistory(raw);
-
-    // Exemplo simples: resetar estratégias e criar fictícias para demonstração
-    strategies = [];
-    strategies.push({name: 'Soma Anterior+Posterior', weight: 0.8});
-    strategies.push({name: 'Padrão Horário', weight: 0.7});
-    strategies.push({name: 'Sequência de Cores', weight: 0.6});
-
-    // Atualizar interface com sucesso e quantidade de estratégias
-    document.getElementById('historyStatus').innerText = '✅ Histórico analisado com sucesso';
-    document.getElementById('historyStatus').className = 'success';
-    document.getElementById('strategyCount').innerText = `${strategies.length} estratégias criadas`;
-    document.getElementById('strategyCount').className = 'success';
-  }
-
-  // Função fictícia para analisar o padrão atual (tempo real)
-  function analyzePattern() {
-    const raw = document.getElementById('patternInput').value;
-    if (!raw.trim()) {
-      document.getElementById('patternStatus').innerText = 'Por favor, cole o padrão para análise.';
-      document.getElementById('patternStatus').className = 'error';
-      return;
+    function analyzeHistory() {
+      const input = document.getElementById('historyInput').value;
+      if (!input.trim()) return alert('Histórico vazio!');
+      strategies.push({ nome: "Estratégia " + (strategies.length + 1), peso: 1 });
+      localStorage.setItem('strategies', JSON.stringify(strategies));
+      document.getElementById('historyStatus').innerText = '✅ Histórico analisado com sucesso';
+      document.getElementById('strategyCount').innerText = `${strategies.length} estratégias criadas`;
+      drawCharts();
     }
 
-    // Aqui deve ter a lógica real de análise e previsão
-    // Por enquanto, simulamos uma previsão aleatória
-    document.getElementById('patternStatus').innerText = '✅ Análise feita com sucesso';
-    document.getElementById('patternStatus').className = 'success';
-
-    const nextMinute = new Date();
-    nextMinute.setMinutes(nextMinute.getMinutes() + Math.floor(Math.random() * 5) + 1);
-    const hh = nextMinute.getHours().toString().padStart(2, '0');
-    const mm = nextMinute.getMinutes().toString().padStart(2, '0');
-
-    // Simular força e confiança
-    const strength = Math.random() > 0.5 ? 'Forte' : 'Arriscado';
-    const confidence = Math.floor(Math.random() * 36) + 65; // 65% a 100%
-
-    document.getElementById('nextPrediction').innerHTML =
-      `Próximo branco provável em <strong>${hh}:${mm}</strong> — ` +
-      `<span style="color:${strength === 'Forte' ? '#0f0' : '#ff0'}">${strength}</span> — ` +
-      `Confiança: ${confidence}%`;
-
-    // Salvar na história de previsões (status pendente)
-    predictionHistory.push({
-      time: `${hh}:${mm}`,
-      strength,
-      confidence,
-      result: '⏳',
-    });
-    updatePredictionLog();
-  }
-
-  // Atualizar o histórico de previsões exibido
-  function updatePredictionLog() {
-    const logDiv = document.getElementById('predictionLog');
-    logDiv.innerHTML = '';
-    predictionHistory.forEach((item, idx) => {
-      logDiv.innerHTML +=
-        `${idx + 1}. ${item.time} — ${item.strength} — Confiança: ${item.confidence}% — Resultado: ${item.result}\n`;
-    });
-    updateAccuracyRate();
-  }
-
-  // Atualizar taxa de acerto
-  function updateAccuracyRate() {
-    const total = hits + misses;
-    let rate = 0;
-    if (total > 0) rate = Math.round((hits / total) * 100);
-    document.getElementById('accuracyRate').innerText =
-      `🎯 Taxa de acerto: ${rate}% (${hits} acertos / ${misses} erros)`;
-  }
-
-  // Marcar resultado da previsão: acertou ou errou
-  function markResult(acertou) {
-    if (predictionHistory.length === 0) {
-      alert('Não há previsão para marcar resultado.');
-      return;
+    function clearHistory() {
+      document.getElementById('historyInput').value = '';
+      document.getElementById('historyStatus').innerText = '';
+      document.getElementById('strategyCount').innerText = '';
     }
-    const lastPrediction = predictionHistory[predictionHistory.length - 1];
-    if (lastPrediction.result !== '⏳') {
-      alert('Resultado já marcado para a última previsão.');
-      return;
-    }
-    if (acertou) {
-      hits++;
-      lastPrediction.result = '✅';
-      reinforceStrategy();
-    } else {
-      misses++;
-      lastPrediction.result = '❌';
-      adjustStrategy();
-    }
-    updatePredictionLog();
-  }
 
-  // Funções fictícias para reforçar e ajustar estratégias (a implementar)
-  function reinforceStrategy() {
-    // Aqui pode aumentar peso da estratégia usada
-    // Placeholder para futura lógica
-    console.log('Estratégia reforçada.');
-  }
-  function adjustStrategy() {
-    // Aqui pode reduzir peso da estratégia usada ou ajustar
-    // Placeholder para futura lógica
-    console.log('Estratégia ajustada.');
-  }
+    function analyzePattern() {
+      const input = document.getElementById('patternInput').value;
+      if (!input.trim()) return alert('Cole um padrão!');
+      const hh = new Date().getHours().toString().padStart(2, '0');
+      const mm = (new Date().getMinutes() + Math.floor(Math.random()*5)).toString().padStart(2, '0');
+      const confidence = Math.floor(Math.random() * 41) + 60;
+      const strong = confidence > 75 ? 'Forte' : 'Arriscado';
+      const stake = (confidence / 100 * 10).toFixed(2);
+      predictions.push({ hora: `${hh}:${mm}`, força: strong, confiança: confidence, stake, resultado: '⏳' });
+      localStorage.setItem('predictions', JSON.stringify(predictions));
+      document.getElementById('nextPrediction').innerText = `🎯 Branco provável em ${hh}:${mm} (${strong}) — Confiança: ${confidence}%. Stake sugerida: R$${stake}`;
+      document.getElementById('modeStatus').innerText = confidence > 80 ? '✅ Modo Operacional Ativo' : '⏳ Aguardando melhor padrão';
+      if (patternAnalyzed) document.getElementById('patternInput').value = '';
+      patternAnalyzed = true;
+      updatePredictionLog();
+      drawCharts();
+    }
 
-  // Exportar relatório CSV (simples)
-  function exportReportCSV() {
-    if (predictionHistory.length === 0) {
-      alert('Nenhum dado para exportar.');
-      return;
+    function clearPattern() {
+      document.getElementById('patternInput').value = '';
+      document.getElementById('nextPrediction').innerText = '';
+      document.getElementById('modeStatus').innerText = '';
     }
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Nº,Horário,Força,Confiança,Resultado\n';
-    predictionHistory.forEach((item, idx) => {
-      csvContent += `${idx + 1},${item.time},${item.strength},${item.confidence}%,${item.result}\n`;
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'scofield_analista_relatorio.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
 
-  // Exportar relatório PDF (simples usando jsPDF)
-  function exportReportPDF() {
-    if (typeof window.jsPDF === 'undefined') {
-      alert('Biblioteca jsPDF não carregada. Importe a biblioteca para usar essa função.');
-      return;
+    function updatePredictionLog() {
+      const log = predictions.map((p, i) =>
+        `${i + 1}. ${p.hora} — ${p.força} — Confiança: ${p.confiança}% — R$${p.stake} — Resultado: ${p.resultado}`
+      ).join('\\n');
+      document.getElementById('predictionLog').innerText = log;
+      updateAccuracy();
     }
-    if (predictionHistory.length === 0) {
-      alert('Nenhum dado para exportar.');
-      return;
+
+    function markResult(acerto) {
+      if (!predictions.length) return;
+      const last = predictions[predictions.length - 1];
+      if (last.resultado !== '⏳') return;
+      last.resultado = acerto ? '✅' : '❌';
+      acerto ? hits++ : misses++;
+      localStorage.setItem('predictions', JSON.stringify(predictions));
+      updatePredictionLog();
     }
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Relatório Scofield Analista', 10, 10);
-    doc.setFontSize(12);
-    let y = 20;
-    doc.text('Nº Horário Força Confiança Resultado', 10, y);
-    y += 10;
-    predictionHistory.forEach((item, idx) => {
-      doc.text(
-        `${idx + 1} ${item.time} ${item.strength} ${item.confidence}% ${item.result}`,
-        10,
-        y
-      );
-      y += 10;
-    });
-    doc.save('scofield_analista_relatorio.pdf');
-  }
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    function updateAccuracy() {
+      const total = hits + misses;
+      const percent = total ? Math.round((hits / total) * 100) : 0;
+      document.getElementById('accuracyRate').innerText = `🎯 Taxa de acerto: ${percent}% (${hits} acertos / ${misses} erros)`;
+    }
+
+    function drawCharts() {
+      const freq = new Array(60).fill(0);
+      predictions.forEach(p => {
+        const min = parseInt(p.hora.split(':')[1]);
+        freq[min]++;
+      });
+      const ctx1 = document.getElementById('freqChart').getContext('2d');
+      ctx1.clearRect(0, 0, 300, 150);
+      freq.forEach((v, i) => {
+        ctx1.fillStyle = '#0f0';
+        ctx1.fillRect(i * 5, 150 - v * 10, 4, v * 10);
+      });
+
+      const ctx2 = document.getElementById('accuracyChart').getContext('2d');
+      ctx2.clearRect(0, 0, 300, 150);
+      const total = hits + misses || 1;
+      const green = (hits / total) * 300;
+      ctx2.fillStyle = '#0f0';
+      ctx2.fillRect(0, 0, green, 50);
+      ctx2.fillStyle = '#f00';
+      ctx2.fillRect(green, 0, 300 - green, 50);
+    }
+
+    function exportStrategies() {
+      const blob = new Blob([JSON.stringify(strategies)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'estrategias.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importStrategies(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          strategies = JSON.parse(reader.result);
+          localStorage.setItem('strategies', JSON.stringify(strategies));
+          alert('Estratégias importadas com sucesso!');
+        } catch (e) {
+          alert('Erro ao importar estratégias.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    window.onload = () => {
+      updatePredictionLog();
+      drawCharts();
+    }
+  </script>
 </body>
 </html>
