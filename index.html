@@ -24,7 +24,7 @@
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   .pedra-box {
     width: 100px;
@@ -43,11 +43,13 @@
     background: #b71c1c;
     box-shadow: 0 0 20px #ff5252;
     border: 3px solid #ff1744;
+    color: #fff;
   }
   .pedra-preta {
     background: #222;
     box-shadow: 0 0 20px #444;
     border: 3px solid #555;
+    color: #eee;
   }
   .pedra-branco {
     background: #fff;
@@ -58,11 +60,15 @@
     text-align: center;
     padding: 10px;
     line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .pedra-branco .frase {
     font-weight: 700;
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
+    margin-top: 5px;
   }
   .inputs-container {
     display: flex;
@@ -79,7 +85,7 @@
     font-size: 0.85rem;
     margin-bottom: 4px;
   }
-  input[type="text"], input[type="time"], input[type="number"] {
+  input[type="text"], input[type="number"] {
     padding: 6px 8px;
     border-radius: 5px;
     border: none;
@@ -142,47 +148,49 @@
 
 <h1>Scofield Analista - Previsão Branco Blaze</h1>
 
-<div class="pedras-container">
-  <div class="pedra-box pedra-vermelha" title="Pedra Vermelha">V</div>
-  <div class="pedra-box pedra-branco" title="Pedra Branco">
+<!-- Os 3 quadrados na parte superior -->
+<div class="pedras-container" aria-label="Indicadores das pedras">
+  <div class="pedra-box pedra-vermelha" title="Pedra Vermelha" role="img" aria-label="Pedra Vermelha">V</div>
+  <div class="pedra-box pedra-branco" title="Pedra Branco" role="img" aria-label="Pedra Branco">
     <div class="frase">"A paciência é a chave do sucesso."</div>
   </div>
-  <div class="pedra-box pedra-preta" title="Pedra Preta">P</div>
+  <div class="pedra-box pedra-preta" title="Pedra Preta" role="img" aria-label="Pedra Preta">P</div>
 </div>
 
-<div class="inputs-container">
+<!-- Inputs logo abaixo de cada quadrado -->
+<div class="inputs-container" aria-label="Inputs para números e horários das pedras">
   <div class="input-group">
     <label for="num-vermelha">Número Vermelha</label>
-    <input type="number" id="num-vermelha" min="1" max="14" placeholder="Ex: 5" />
+    <input type="number" id="num-vermelha" min="1" max="14" placeholder="Ex: 5" aria-describedby="descNumVermelha" />
     <label for="hora-vermelha">Hora (HH:MM:SS)</label>
-    <input type="text" id="hora-vermelha" placeholder="20:16:30" pattern="^\d{2}:\d{2}:\d{2}$" />
+    <input type="text" id="hora-vermelha" placeholder="20:16:30" pattern="^\d{2}:\d{2}:\d{2}$" aria-describedby="descHoraVermelha" />
   </div>
   <div class="input-group">
     <label for="hora-branco">Hora Branco (HH:MM:SS)</label>
-    <input type="text" id="hora-branco" placeholder="20:17:00" pattern="^\d{2}:\d{2}:\d{2}$" />
+    <input type="text" id="hora-branco" placeholder="20:17:00" pattern="^\d{2}:\d{2}:\d{2}$" aria-describedby="descHoraBranco" />
   </div>
   <div class="input-group">
     <label for="num-preta">Número Preta</label>
-    <input type="number" id="num-preta" min="1" max="14" placeholder="Ex: 10" />
+    <input type="number" id="num-preta" min="1" max="14" placeholder="Ex: 10" aria-describedby="descNumPreta" />
     <label for="hora-preta">Hora (HH:MM:SS)</label>
-    <input type="text" id="hora-preta" placeholder="20:17:30" pattern="^\d{2}:\d{2}:\d{2}$" />
+    <input type="text" id="hora-preta" placeholder="20:17:30" pattern="^\d{2}:\d{2}:\d{2}$" aria-describedby="descHoraPreta" />
   </div>
 </div>
 
 <div style="text-align:center; margin-bottom: 25px;">
-  <button id="btn-add-historico">Adicionar ao Histórico</button>
-  <button id="btn-limpar">Limpar Histórico</button>
+  <button id="btn-add-historico" aria-label="Adicionar entradas manuais ao histórico">Adicionar ao Histórico</button>
+  <button id="btn-limpar" aria-label="Limpar histórico">Limpar Histórico</button>
 </div>
 
-<textarea id="historico-textarea" placeholder="Cole aqui o histórico completo (horário + pedra)."></textarea>
+<textarea id="historico-textarea" placeholder="Cole aqui o histórico completo (horário + pedra)." aria-label="Área para colar histórico"></textarea>
 <br />
-<button id="btn-carregar-historico">Carregar Histórico</button>
+<button id="btn-carregar-historico" aria-label="Carregar histórico colado">Carregar Histórico</button>
 
-<div id="msg-previsao"></div>
+<div id="msg-previsao" role="alert" aria-live="assertive"></div>
 
 <div style="text-align:center; margin-top: 20px;">
-  <button id="btn-acertou">Acertou</button>
-  <button id="btn-errou">Errou</button>
+  <button id="btn-acertou" aria-label="Marcar previsão como acertada">Acertou</button>
+  <button id="btn-errou" aria-label="Marcar previsão como errada">Errou</button>
 </div>
 
 <audio id="alert-sound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
@@ -192,16 +200,13 @@
 </footer>
 
 <script>
-  // Tabela de pedras para cores fixas conforme combinado
+  // Pedras vermelhas e pretas fixas conforme informado
   const pedrasVermelhas = new Set([1,2,3,4,5,6,7]);
   const pedrasPretas = new Set([8,9,11,12,13,14]);
-  
-  // Histórico armazenado em localStorage (array de objetos: {hora, pedra, cor})
+
   let historico = JSON.parse(localStorage.getItem('historicoScofield')) || [];
-  // Aprendizado simples, guarda acertos/erros de previsões
   let aprendizado = JSON.parse(localStorage.getItem('aprendizadoScofield')) || {acertos: 0, erros: 0};
 
-  // Referências DOM
   const txtHistorico = document.getElementById('historico-textarea');
   const msgPrevisao = document.getElementById('msg-previsao');
   const alertSound = document.getElementById('alert-sound');
@@ -214,7 +219,6 @@
   }
 
   function parseHoraToSeconds(horaStr) {
-    // Espera formato HH:MM:SS
     const parts = horaStr.split(':');
     if(parts.length !== 3) return null;
     const [h,m,s] = parts.map(Number);
@@ -229,7 +233,6 @@
     return `${h}:${m}:${s}`;
   }
 
-  // Função para identificar cor da pedra pelo número
   function identificarCor(pedraNum) {
     if(pedraNum === null || pedraNum === undefined || pedraNum === '') return 'branco';
     const num = Number(pedraNum);
@@ -238,7 +241,6 @@
     return 'desconhecida';
   }
 
-  // Função para adicionar entrada manual ao histórico
   document.getElementById('btn-add-historico').onclick = () => {
     const numV = document.getElementById('num-vermelha').value.trim();
     const horaV = document.getElementById('hora-vermelha').value.trim();
@@ -251,19 +253,16 @@
       return;
     }
 
-    // Adiciona vermelha
     historico.push({
       hora: horaV,
       pedra: numV || null,
       cor: identificarCor(numV)
     });
-    // Branco
     historico.push({
       hora: horaB,
       pedra: null,
       cor: 'branco'
     });
-    // Preta
     historico.push({
       hora: horaP,
       pedra: numP || null,
@@ -284,7 +283,6 @@
     document.getElementById('hora-preta').value = '';
   }
 
-  // Função para limpar histórico
   document.getElementById('btn-limpar').onclick = () => {
     if(confirm('Tem certeza que deseja limpar o histórico?')) {
       historico = [];
@@ -294,7 +292,6 @@
     }
   };
 
-  // Carregar histórico da textarea para a variável
   document.getElementById('btn-carregar-historico').onclick = () => {
     const texto = txtHistorico.value.trim();
     if(!texto) {
@@ -302,32 +299,19 @@
       return;
     }
     const linhas = texto.split('\n').map(l => l.trim()).filter(l => l !== '');
-    // Espera pares linha: horário ou número, alternados
     let novoHistorico = [];
     for(let i=0; i < linhas.length; i++) {
       const linha = linhas[i];
-      // Detecta se é horário ou número (numérico ou vazio para branco)
       if(linha.match(/^\d{2}:\d{2}:\d{2}$/)) {
-        // Horário - verificar próxima linha para pedra
         if(i > 0) {
           let pedraRaw = linhas[i-1];
           let cor = identificarCor(pedraRaw);
-          // Se pedraRaw for horário também (ex: sequência só de horários), considera branco
           if(pedraRaw.match(/^\d{2}:\d{2}:\d{2}$/)) cor = 'branco';
           novoHistorico.push({
             hora: linha,
             pedra: cor === 'branco' ? null : Number(pedraRaw),
             cor
           });
-        }
-      } else {
-        // Se for número, próxima linha tem que ser horário para formar par
-        if(i+1 < linhas.length && linhas[i+1].match(/^\d{2}:\d{2}:\d{2}$/)) {
-          // já processado na iteração do horário
-          continue;
-        } else {
-          // Pedra sem horário => ignorar
-          continue;
         }
       }
     }
@@ -339,7 +323,6 @@
   };
 
   function carregarHistoricoNaTextarea() {
-    // Monta texto simples para exibir no textarea
     let texto = '';
     for(const item of historico) {
       const numStr = item.pedra === null ? '' : item.pedra.toString();
@@ -348,19 +331,16 @@
     txtHistorico.value = texto.trim();
   }
 
-  // Função de previsão simples: procura o último branco no histórico e tenta prever o próximo branco baseado no intervalo médio entre brancos
   function analisarPrevisao() {
     if(historico.length === 0) {
       msgPrevisao.textContent = 'Sem histórico para analisar.';
       return;
     }
-    // Filtrar brancos e ordenar por hora
     const brancos = historico.filter(i => i.cor === 'branco').sort((a,b) => parseHoraToSeconds(a.hora) - parseHoraToSeconds(b.hora));
     if(brancos.length < 2) {
       msgPrevisao.textContent = 'Mais dados de brancos necessários para prever.';
       return;
     }
-    // Calcular intervalos médios entre brancos (em segundos)
     let diffs = [];
     for(let i=1; i < brancos.length; i++) {
       const s1 = parseHoraToSeconds(brancos[i-1].hora);
@@ -373,7 +353,6 @@
     }
     const mediaIntervalo = diffs.reduce((a,b) => a+b, 0) / diffs.length;
 
-    // Último branco
     const ultimoBranco = brancos[brancos.length - 1];
     const ultimoSeg = parseHoraToSeconds(ultimoBranco.hora);
 
@@ -386,7 +365,6 @@
 
     msgPrevisao.textContent = `PRÓXIMO BRANCO PROVÁVEL EM ${previsaoHora} — PREPARA!`;
 
-    // Se estiver próximo (menos de 10 segundos) toca som
     const agora = new Date();
     const agoraSeg = agora.getHours()*3600 + agora.getMinutes()*60 + agora.getSeconds();
     if(Math.abs(previsaoSeg - agoraSeg) <= 10) {
@@ -394,7 +372,6 @@
     }
   }
 
-  // Botões acertou / errou para aprendizado simples
   document.getElementById('btn-acertou').onclick = () => {
     aprendizado.acertos++;
     salvarAprendizado();
@@ -406,7 +383,6 @@
     alert(`Que pena! Total Erros: ${aprendizado.erros}`);
   };
 
-  // Ao carregar a página, carrega histórico e faz análise
   window.onload = () => {
     carregarHistoricoNaTextarea();
     analisarPrevisao();
