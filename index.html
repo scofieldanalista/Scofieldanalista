@@ -2,121 +2,132 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Scofield Analista - Blaze Branco</title>
 <style>
+  /* Reset básico */
+  * {
+    box-sizing: border-box;
+  }
   body {
     background: #121212;
     color: #eee;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0; padding: 0; min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
+    margin: 0; padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
   }
   header {
-    padding: 15px;
-    font-size: 24px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    margin-top: 15px;
-    text-align: center;
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 15px;
     color: #ff4c4c;
     user-select: none;
   }
   #container {
-    max-width: 960px;
-    width: 95%;
-    margin-top: 10px;
+    background: #222;
+    border-radius: 10px;
+    padding: 15px;
+    width: 100%;
+    max-width: 920px;
+    display: flex;
+    flex-direction: column;
   }
-  #input-area {
+  /* Quadrados pedras */
+  #stones-row {
     display: flex;
     justify-content: space-between;
-    gap: 15px;
+    gap: 12px;
     margin-bottom: 15px;
+    flex-wrap: nowrap;
   }
   .stone-box {
-    background: #222;
+    background: #333;
     border-radius: 8px;
-    padding: 15px 10px 25px;
-    flex: 1;
-    min-width: 100px;
+    flex: 1 1 0;
+    padding: 12px 10px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    user-select: none;
+    min-width: 110px;
   }
   .stone-color {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    margin-bottom: 12px;
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: 700;
-    font-size: 20px;
-    text-align: center;
+    font-size: 18px;
     color: white;
     user-select: none;
+    text-align: center;
   }
   .stone-color.red { background: #d32f2f; }
   .stone-color.black { background: #222; }
   .stone-color.white {
     background: white;
     color: #121212;
-    font-weight: 600;
-    font-size: 18px;
+    font-weight: 700;
+    font-size: 14px;
+    flex-direction: column;
+    display: flex;
   }
   .stone-color.white .phrase {
-    font-size: 14px;
-    font-weight: normal;
-    margin-top: 3px;
+    margin-top: 6px;
+    font-weight: 400;
+    font-size: 12px;
     color: #444;
-  }
-  label {
-    font-size: 14px;
-    margin-top: 8px;
     user-select: none;
   }
-  input[type="text"], input[type="time"] {
-    width: 90%;
+  label {
+    margin-top: 8px;
+    font-size: 13px;
+    width: 100%;
+    text-align: center;
+    user-select: none;
+  }
+  input[type="text"] {
+    margin-top: 5px;
     padding: 5px 8px;
-    margin-top: 3px;
+    font-size: 15px;
     border-radius: 5px;
     border: none;
-    font-size: 16px;
-  }
-  #history-area {
-    margin-top: 15px;
-  }
-  #history-textarea {
     width: 100%;
-    height: 180px;
+    text-align: center;
+  }
+  textarea {
+    background: #222;
+    border: none;
+    border-radius: 8px;
+    color: #eee;
     font-family: monospace;
     font-size: 14px;
+    min-height: 150px;
     padding: 10px;
-    border-radius: 6px;
-    border: none;
     resize: vertical;
-    background: #222;
-    color: #eee;
+    width: 100%;
   }
   #buttons {
-    margin-top: 10px;
+    margin-top: 12px;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
   }
   button {
-    flex: 1 1 120px;
-    padding: 10px 15px;
+    flex: 1 1 140px;
+    background: #ff4c4c;
+    border: none;
+    color: white;
     font-weight: 700;
     font-size: 16px;
-    border: none;
     border-radius: 8px;
+    padding: 10px 5px;
     cursor: pointer;
     user-select: none;
-    background: #ff4c4c;
-    color: white;
     transition: background-color 0.3s ease;
   }
   button:hover {
@@ -124,28 +135,30 @@
   }
   #message {
     margin-top: 15px;
-    font-size: 18px;
-    text-align: center;
     font-weight: 700;
-    color: #f9c74f;
+    font-size: 18px;
     min-height: 40px;
+    color: #f9c74f;
+    text-align: center;
     user-select: none;
   }
   #stats {
-    margin-top: 15px;
+    margin-top: 10px;
     font-size: 14px;
+    text-align: center;
     color: #aaa;
+    user-select: none;
   }
-  #probability-chart {
-    margin-top: 15px;
-    width: 100%;
-    max-height: 200px;
-    background: #222;
-    border-radius: 8px;
-    overflow-x: auto;
-  }
-  canvas {
-    background: #121212;
+
+  /* Responsividade: no mobile, pedras empilham */
+  @media (max-width: 640px) {
+    #stones-row {
+      flex-direction: column;
+      gap: 12px;
+    }
+    .stone-box {
+      min-width: 100%;
+    }
   }
 </style>
 </head>
@@ -155,7 +168,7 @@
 
 <div id="container">
 
-  <div id="input-area">
+  <div id="stones-row">
     <div class="stone-box" id="stone-previous">
       <div class="stone-color red">Anterior</div>
       <label for="prev-number">Número:</label>
@@ -163,6 +176,7 @@
       <label for="prev-time">Horário (HH:MM:SS):</label>
       <input type="text" id="prev-time" placeholder="20:15:30" pattern="\d{2}:\d{2}:\d{2}" />
     </div>
+
     <div class="stone-box" id="stone-white">
       <div class="stone-color white">
         Branco
@@ -171,6 +185,7 @@
       <label for="white-time">Horário Branco (HH:MM:SS):</label>
       <input type="text" id="white-time" placeholder="20:15:33" pattern="\d{2}:\d{2}:\d{2}" />
     </div>
+
     <div class="stone-box" id="stone-next">
       <div class="stone-color black">Posterior</div>
       <label for="next-number">Número:</label>
@@ -180,10 +195,8 @@
     </div>
   </div>
 
-  <div>
-    <label for="history-textarea">Cole o histórico aqui (número, horário, linhas alternadas):</label>
-    <textarea id="history-textarea" placeholder="Cole o histórico completo aqui..."></textarea>
-  </div>
+  <label for="history-textarea" style="margin-top:8px; font-weight:700;">Cole o histórico aqui (número na linha, horário na linha seguinte):</label>
+  <textarea id="history-textarea" placeholder="Cole o histórico completo aqui..."></textarea>
 
   <div id="buttons">
     <button id="parse-history">Analisar Histórico</button>
@@ -195,31 +208,22 @@
 
   <div id="message"></div>
   <div id="stats"></div>
-
-  <div id="probability-chart">
-    <canvas id="chart" width="900" height="180"></canvas>
-  </div>
-
 </div>
 
 <script>
-  // Pedras vermelhas e pretas conhecidas
   const RED_STONES = new Set(['1','2','3','4','5','6','7']);
   const BLACK_STONES = new Set(['8','9','11','12','13','14']);
 
-  // Histórico e dados salvos
   let historyData = [];
   let learnedStrategies = JSON.parse(localStorage.getItem('learnedStrategies') || '[]');
   let hits = parseInt(localStorage.getItem('hits') || '0', 10);
   let misses = parseInt(localStorage.getItem('misses') || '0', 10);
 
-  // Util: converte "HH:MM:SS" em segundos desde meia-noite
   function timeToSeconds(t) {
     const m = t.match(/^(\d{2}):(\d{2}):(\d{2})$/);
     if (!m) return null;
     return parseInt(m[1],10)*3600 + parseInt(m[2],10)*60 + parseInt(m[3],10);
   }
-  // Util: segundos para "HH:MM:SS"
   function secondsToTime(s) {
     s = s % 86400;
     const h = Math.floor(s/3600).toString().padStart(2,'0');
@@ -228,44 +232,34 @@
     return `${h}:${m}:${ss}`;
   }
 
-  // Parse histórico do textarea para objetos: {number, time, color}
+  function determineColor(num) {
+    if (!num || num.trim()==='') return 'white';
+    if (RED_STONES.has(num)) return 'red';
+    if (BLACK_STONES.has(num)) return 'black';
+    const n = parseInt(num, 10);
+    if (isNaN(n)) return 'white';
+    if (n >= 1 && n <= 7) return 'red';
+    return 'black';
+  }
+
   function parseHistory(text) {
-    const lines = text.trim().split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+    const lines = text.trim().split(/\r?\n/).map(l=>l.trim());
     let data = [];
-    // O formato que você me passou é:
-    // número linha 1
-    // horário linha 2
-    // repetir...
-    for(let i=0; i<lines.length; i+=2) {
+    for(let i=0; i < lines.length; i += 2) {
       const num = lines[i];
       const time = lines[i+1] || '';
-      if (!time.match(/^\d{2}:\d{2}:\d{2}$/)) continue; // só aceita horários no formato correto
+      if (!time.match(/^\d{2}:\d{2}:\d{2}$/)) continue;
       const color = determineColor(num);
       data.push({number: num, time: time, color});
     }
     return data;
   }
 
-  // Determina a cor da pedra pelo número ou vazio (branco)
-  function determineColor(num) {
-    if (num === '' || num === null || num === undefined) return 'white';
-    if (RED_STONES.has(num)) return 'red';
-    if (BLACK_STONES.has(num)) return 'black';
-    // Se número não estiver em nenhuma lista, tenta converter e classificar
-    const n = parseInt(num, 10);
-    if (isNaN(n)) return 'white';
-    if (n >= 1 && n <= 7) return 'red';
-    if (n === 10) return 'red'; // consideramos 10 como vermelho (ajuste se quiser)
-    return 'black';
-  }
-
-  // Salvar histórico em memória
   function saveHistory(data) {
     historyData = data;
     localStorage.setItem('historyData', JSON.stringify(historyData));
   }
 
-  // Carregar histórico da memória local
   function loadHistory() {
     const saved = localStorage.getItem('historyData');
     if (saved) {
@@ -277,21 +271,19 @@
     }
   }
 
-  // Salvar aprendizado (estratégias, hits e misses)
   function saveLearnedData() {
     localStorage.setItem('learnedStrategies', JSON.stringify(learnedStrategies));
     localStorage.setItem('hits', hits.toString());
     localStorage.setItem('misses', misses.toString());
+    localStorage.setItem('historyData', JSON.stringify(historyData));
   }
 
-  // Exibir mensagem na tela
-  function showMessage(msg, color='#f9c74f') {
+  function showMessage(msg, color = '#f9c74f') {
     const el = document.getElementById('message');
     el.style.color = color;
     el.textContent = msg;
   }
 
-  // Exibir estatísticas
   function showStats() {
     const el = document.getElementById('stats');
     const total = hits + misses;
@@ -299,7 +291,6 @@
     el.textContent = `Acertos: ${hits} | Erros: ${misses} | Precisão: ${acc}%`;
   }
 
-  // Função principal para analisar histórico
   function analyzeHistory() {
     const text = document.getElementById('history-textarea').value;
     const data = parseHistory(text);
@@ -312,7 +303,6 @@
     showStats();
   }
 
-  // Função para limpar histórico e dados da tela
   function clearHistory() {
     historyData = [];
     learnedStrategies = [];
@@ -324,14 +314,28 @@
     showStats();
   }
 
-  // Lógica de previsão do branco baseada nas estratégias aprendidas e manual inputs
+  function playAlertSound() {
+    try {
+      const audioCtx = new AudioContext();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch(e) {
+      // Fail silently if audio not supported
+    }
+  }
+
   function predictWhite() {
     if (historyData.length === 0) {
       showMessage('Carregue um histórico primeiro.', 'red');
       return;
     }
-
-    // Pega as pedras manualmente informadas
     const prevNum = document.getElementById('prev-number').value.trim();
     const prevTime = document.getElementById('prev-time').value.trim();
     const whiteTime = document.getElementById('white-time').value.trim();
@@ -339,11 +343,10 @@
     const nextTime = document.getElementById('next-time').value.trim();
 
     if (!prevNum || !prevTime || !whiteTime || !nextNum || !nextTime) {
-      showMessage('Informe número e horário das pedras anterior, branco e posterior.', 'red');
+      showMessage('Preencha número e horário das pedras anterior, branco e posterior.', 'red');
       return;
     }
 
-    // Convertendo horários para segundos
     const prevSec = timeToSeconds(prevTime);
     const whiteSec = timeToSeconds(whiteTime);
     const nextSec = timeToSeconds(nextTime);
@@ -352,60 +355,39 @@
       return;
     }
 
-    // Estratégia simples de exemplo: busca no histórico momentos onde a soma anterior + posterior bate com a atual
-    const prevNumInt = parseInt(prevNum,10);
-    const nextNumInt = parseInt(nextNum,10);
+    const prevNumInt = parseInt(prevNum, 10);
+    const nextNumInt = parseInt(nextNum, 10);
     if (isNaN(prevNumInt) || isNaN(nextNumInt)) {
       showMessage('Números inválidos.', 'red');
       return;
     }
 
-    // Procurar no histórico pares que batam com a soma e tempos semelhantes
-    // Exemplo: A soma da pedra anterior + posterior do histórico próxima do tempo branco informado
+    // Procurar no histórico padrões próximos da soma e do horário branco
     let candidates = [];
-    for (let i = 1; i < historyData.length -1; i++) {
-      const pPrev = historyData[i-1];
+    for (let i = 1; i < historyData.length - 1; i++) {
+      const pPrev = historyData[i - 1];
       const pCurrent = historyData[i];
-      const pNext = historyData[i+1];
+      const pNext = historyData[i + 1];
 
       if (pCurrent.color === 'white') {
-        const sumHist = parseInt(pPrev.number,10) + parseInt(pNext.number,10);
+        const sumHist = parseInt(pPrev.number, 10) + parseInt(pNext.number, 10);
         if (sumHist === prevNumInt + nextNumInt) {
-          // Verifica se horário do branco histórico está perto do informado (dentro de 300 segundos)
           const histWhiteSec = timeToSeconds(pCurrent.time);
-          if (Math.abs(histWhiteSec - whiteSec) < 300) {
+          if (Math.abs(histWhiteSec - whiteSec) < 300) { // 5 minutos janela
             candidates.push(pCurrent);
           }
         }
       }
     }
 
-    // Mostrar resultado da previsão
     if (candidates.length > 0) {
       showMessage(`PRÓXIMO BRANCO PROVÁVEL EM ${whiteTime} — PREPARA!`, '#90ee90');
       playAlertSound();
     } else {
       showMessage('Nenhum padrão encontrado para essa combinação.', 'orange');
     }
-
-    // Atualizar gráfico e dados aprendidos (pode evoluir para aprendizado real)
   }
 
-  // Função para tocar som de alerta
-  function playAlertSound() {
-    const audioCtx = new AudioContext();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.2);
-  }
-
-  // Marcar acerto e erro para aprendizado simples
   function markHit() {
     hits++;
     saveLearnedData();
@@ -419,14 +401,12 @@
     showStats();
   }
 
-  // Eventos dos botões
   document.getElementById('parse-history').onclick = analyzeHistory;
   document.getElementById('clear-history').onclick = clearHistory;
   document.getElementById('predict-white').onclick = predictWhite;
   document.getElementById('mark-hit').onclick = markHit;
   document.getElementById('mark-miss').onclick = markMiss;
 
-  // Ao carregar a página, tenta carregar dados salvos
   window.onload = () => {
     loadHistory();
     showStats();
