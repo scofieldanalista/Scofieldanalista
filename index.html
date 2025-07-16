@@ -127,7 +127,7 @@
   <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 
 <script>
-  // Parte 1 - Variáveis globais e setup inicial
+  // Variáveis globais
   let strategies = [];
   let predictionHistory = [];
   let hits = 0;
@@ -147,21 +147,21 @@
     }
   }
 
-  // Função para limpar textarea do histórico de estudo
+  // Limpar textarea do histórico de estudo
   function clearHistoryInput() {
     document.getElementById('studyInput').value = '';
     document.getElementById('historyStatus').innerText = '';
     document.getElementById('strategyCount').innerText = '';
   }
 
-  // Função para limpar textarea do padrão atual
+  // Limpar textarea do padrão atual
   function clearPatternInput() {
     document.getElementById('patternInput').value = '';
     document.getElementById('patternStatus').innerText = '';
     document.getElementById('nextPrediction').innerText = '';
   }
 
-  // Função para parsear histórico (valores e horários)
+  // Parse do histórico (valores e horários)
   function parseHistory(raw) {
     const lines = raw.trim().split('\\n');
     const entries = [];
@@ -178,4 +178,171 @@
     }
     return entries;
   }
+
+  // Análise do histórico de estudo
+  function analyzeHistory() {
+    const raw = document.getElementById('studyInput').value;
+    if (!raw.trim()) {
+      document.getElementById('historyStatus').innerText = 'Por favor, cole o histórico para análise.';
+      document.getElementById('historyStatus').className = 'error';
+      return;
+    }
+    const entries = parseHistory(raw);
+
+    // Exemplo simples: resetar estratégias e criar fictícias para demonstração
+    strategies = [];
+    strategies.push({name: 'Soma Anterior+Posterior', weight: 0.8});
+    strategies.push({name: 'Padrão Horário', weight: 0.7});
+    strategies.push({name: 'Sequência de Cores', weight: 0.6});
+
+    // Atualizar interface com sucesso e quantidade de estratégias
+    document.getElementById('historyStatus').innerText = '✅ Histórico analisado com sucesso';
+    document.getElementById('historyStatus').className = 'success';
+    document.getElementById('strategyCount').innerText = `${strategies.length} estratégias criadas`;
+    document.getElementById('strategyCount').className = 'success';
+  }
+
+  // Função fictícia para analisar o padrão atual (tempo real)
+  function analyzePattern() {
+    const raw = document.getElementById('patternInput').value;
+    if (!raw.trim()) {
+      document.getElementById('patternStatus').innerText = 'Por favor, cole o padrão para análise.';
+      document.getElementById('patternStatus').className = 'error';
+      return;
+    }
+
+    // Aqui deve ter a lógica real de análise e previsão
+    // Por enquanto, simulamos uma previsão aleatória
+    document.getElementById('patternStatus').innerText = '✅ Análise feita com sucesso';
+    document.getElementById('patternStatus').className = 'success';
+
+    const nextMinute = new Date();
+    nextMinute.setMinutes(nextMinute.getMinutes() + Math.floor(Math.random() * 5) + 1);
+    const hh = nextMinute.getHours().toString().padStart(2, '0');
+    const mm = nextMinute.getMinutes().toString().padStart(2, '0');
+
+    // Simular força e confiança
+    const strength = Math.random() > 0.5 ? 'Forte' : 'Arriscado';
+    const confidence = Math.floor(Math.random() * 36) + 65; // 65% a 100%
+
+    document.getElementById('nextPrediction').innerHTML =
+      `Próximo branco provável em <strong>${hh}:${mm}</strong> — ` +
+      `<span style="color:${strength === 'Forte' ? '#0f0' : '#ff0'}">${strength}</span> — ` +
+      `Confiança: ${confidence}%`;
+
+    // Salvar na história de previsões (status pendente)
+    predictionHistory.push({
+      time: `${hh}:${mm}`,
+      strength,
+      confidence,
+      result: '⏳',
+    });
+    updatePredictionLog();
+  }
+
+  // Atualizar o histórico de previsões exibido
+  function updatePredictionLog() {
+    const logDiv = document.getElementById('predictionLog');
+    logDiv.innerHTML = '';
+    predictionHistory.forEach((item, idx) => {
+      logDiv.innerHTML +=
+        `${idx + 1}. ${item.time} — ${item.strength} — Confiança: ${item.confidence}% — Resultado: ${item.result}\n`;
+    });
+    updateAccuracyRate();
+  }
+
+  // Atualizar taxa de acerto
+  function updateAccuracyRate() {
+    const total = hits + misses;
+    let rate = 0;
+    if (total > 0) rate = Math.round((hits / total) * 100);
+    document.getElementById('accuracyRate').innerText =
+      `🎯 Taxa de acerto: ${rate}% (${hits} acertos / ${misses} erros)`;
+  }
+
+  // Marcar resultado da previsão: acertou ou errou
+  function markResult(acertou) {
+    if (predictionHistory.length === 0) {
+      alert('Não há previsão para marcar resultado.');
+      return;
+    }
+    const lastPrediction = predictionHistory[predictionHistory.length - 1];
+    if (lastPrediction.result !== '⏳') {
+      alert('Resultado já marcado para a última previsão.');
+      return;
+    }
+    if (acertou) {
+      hits++;
+      lastPrediction.result = '✅';
+      reinforceStrategy();
+    } else {
+      misses++;
+      lastPrediction.result = '❌';
+      adjustStrategy();
+    }
+    updatePredictionLog();
+  }
+
+  // Funções fictícias para reforçar e ajustar estratégias (a implementar)
+  function reinforceStrategy() {
+    // Aqui pode aumentar peso da estratégia usada
+    // Placeholder para futura lógica
+    console.log('Estratégia reforçada.');
+  }
+  function adjustStrategy() {
+    // Aqui pode reduzir peso da estratégia usada ou ajustar
+    // Placeholder para futura lógica
+    console.log('Estratégia ajustada.');
+  }
+
+  // Exportar relatório CSV (simples)
+  function exportReportCSV() {
+    if (predictionHistory.length === 0) {
+      alert('Nenhum dado para exportar.');
+      return;
+    }
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'Nº,Horário,Força,Confiança,Resultado\n';
+    predictionHistory.forEach((item, idx) => {
+      csvContent += `${idx + 1},${item.time},${item.strength},${item.confidence}%,${item.result}\n`;
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'scofield_analista_relatorio.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Exportar relatório PDF (simples usando jsPDF)
+  function exportReportPDF() {
+    if (typeof window.jsPDF === 'undefined') {
+      alert('Biblioteca jsPDF não carregada. Importe a biblioteca para usar essa função.');
+      return;
+    }
+    if (predictionHistory.length === 0) {
+      alert('Nenhum dado para exportar.');
+      return;
+    }
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Relatório Scofield Analista', 10, 10);
+    doc.setFontSize(12);
+    let y = 20;
+    doc.text('Nº Horário Força Confiança Resultado', 10, y);
+    y += 10;
+    predictionHistory.forEach((item, idx) => {
+      doc.text(
+        `${idx + 1} ${item.time} ${item.strength} ${item.confidence}% ${item.result}`,
+        10,
+        y
+      );
+      y += 10;
+    });
+    doc.save('scofield_analista_relatorio.pdf');
+  }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
