@@ -3,490 +3,414 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Scofield Analista - Previsão do Branco Blaze</title>
+<title>Scofield Analista - Previsão Branco Blaze</title>
 <style>
   body {
+    font-family: Arial, sans-serif;
     background: #111;
     color: #eee;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0; padding: 0;
     display: flex; flex-direction: column; align-items: center;
     min-height: 100vh;
   }
-  header {
-    background: #222;
-    width: 100%; max-width: 800px;
-    padding: 15px 10px;
+  h1 {
+    margin: 15px 0;
+    font-weight: 900;
     text-align: center;
-    font-weight: bold;
-    font-size: 1.8rem;
-    letter-spacing: 0.12em;
-    border-bottom: 3px solid #E03B3B;
-  }
-  main {
-    max-width: 800px;
-    width: 100%;
-    padding: 20px 10px;
+    color: #eaeaea;
+    text-shadow: 0 0 10px #f44336;
   }
   .pedras-container {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 20px;
     margin-bottom: 20px;
   }
-  .pedra {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .pedra-box {
     width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    position: relative;
+    box-shadow: 0 0 15px #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 2.3rem;
     user-select: none;
   }
-  .quadrado {
-    width: 80px;
-    height: 80px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.8);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem;
-    font-weight: 700;
-    text-align: center;
-    color: white;
+  .pedra-vermelha {
+    background: #b71c1c;
+    box-shadow: 0 0 20px #ff5252;
+    border: 3px solid #ff1744;
   }
-  .quadrado.vermelho {
-    background: #E03B3B;
-    box-shadow: 0 0 15px #E03B3B;
-  }
-  .quadrado.preto {
+  .pedra-preta {
     background: #222;
-    box-shadow: 0 0 15px #222;
+    box-shadow: 0 0 20px #444;
+    border: 3px solid #555;
   }
-  .quadrado.branco {
-    background: #f0f0f0;
+  .pedra-branco {
+    background: #fff;
+    box-shadow: 0 0 20px #ccc;
+    border: 3px solid #999;
     color: #111;
-    font-weight: 600;
+    font-size: 1.4rem;
+    text-align: center;
+    padding: 10px;
+    line-height: 1.2;
+  }
+  .pedra-branco .frase {
+    font-weight: 700;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
-    padding: 5px;
-    line-height: 1.3;
+  }
+  .inputs-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  .input-group {
+    width: 100px;
+    display: flex;
+    flex-direction: column;
   }
   label {
-    font-size: 0.9rem;
-    margin-bottom: 3px;
-    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
   }
   input[type="text"], input[type="time"], input[type="number"] {
-    width: 80px;
-    margin-bottom: 10px;
     padding: 6px 8px;
     border-radius: 5px;
     border: none;
     font-size: 1rem;
-    box-sizing: border-box;
     text-align: center;
+    outline: none;
+    box-shadow: inset 0 0 5px #000;
   }
-  input[type="time"] {
-    font-family: monospace;
+  input[type="time"]::-webkit-inner-spin-button,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
   }
   button {
-    background: #E03B3B;
-    color: white;
+    margin: 5px 10px;
+    background: #f44336;
     border: none;
-    padding: 12px 18px;
-    font-weight: 700;
-    font-size: 1.1rem;
     border-radius: 6px;
+    color: #fff;
+    font-weight: 700;
+    padding: 10px 15px;
     cursor: pointer;
-    margin: 10px 5px 25px 5px;
-    transition: background 0.3s ease;
-    user-select: none;
+    transition: background-color 0.3s ease;
   }
   button:hover {
-    background: #b02c2c;
+    background: #d32f2f;
   }
-  #historico {
-    max-height: 180px;
-    overflow-y: auto;
-    background: #222;
-    padding: 10px;
+  #msg-previsao {
+    margin-top: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ff3d00;
+    text-align: center;
+    text-shadow: 0 0 8px #ff3d00;
+  }
+  #historico-textarea {
+    width: 90vw;
+    max-width: 600px;
+    height: 180px;
     border-radius: 8px;
+    padding: 10px;
     font-family: monospace;
-    font-size: 0.85rem;
-    margin-bottom: 20px;
-    color: #ddd;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    resize: vertical;
   }
-  #mensagem-alerta {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #E03B3B;
-    text-align: center;
-    min-height: 42px;
-    user-select: none;
+  #btn-limpar {
+    background: #555;
+    margin-left: 10px;
   }
-  #ultima-previsao {
-    font-size: 1.15rem;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  #grafico {
-    background: #222;
-    height: 150px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    padding: 10px;
-    box-sizing: border-box;
-  }
-  #status-aposta {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-    color: #eee;
+  footer {
+    margin-top: auto;
+    padding: 15px;
+    font-size: 0.8rem;
+    color: #777;
   }
 </style>
 </head>
 <body>
 
-<header>SCOFIELD ANALISTA</header>
+<h1>Scofield Analista - Previsão Branco Blaze</h1>
 
-<main>
-  <div class="pedras-container">
-    <div class="pedra">
-      <div class="quadrado vermelho">VERMELHO</div>
-      <label for="vermelho-numero">Nº Pedra</label>
-      <input type="number" id="vermelho-numero" min="1" max="14" placeholder="Nº" />
-      <label for="vermelho-horario">Horário (HH:MM:SS)</label>
-      <input type="text" id="vermelho-horario" placeholder="20:15:25" maxlength="8" />
-    </div>
-    <div class="pedra">
-      <div class="quadrado branco">
-        "Quando você quer algo, todo o universo conspira para que você realize."  
-      </div>
-      <label for="branco-horario">Horário Branco (HH:MM:SS)</label>
-      <input type="text" id="branco-horario" placeholder="20:15:29" maxlength="8" />
-    </div>
-    <div class="pedra">
-      <div class="quadrado preto">PRETO</div>
-      <label for="preto-numero">Nº Pedra</label>
-      <input type="number" id="preto-numero" min="1" max="14" placeholder="Nº" />
-      <label for="preto-horario">Horário (HH:MM:SS)</label>
-      <input type="text" id="preto-horario" placeholder="20:15:31" maxlength="8" />
-    </div>
+<div class="pedras-container">
+  <div class="pedra-box pedra-vermelha" title="Pedra Vermelha">V</div>
+  <div class="pedra-box pedra-branco" title="Pedra Branco">
+    <div class="frase">"A paciência é a chave do sucesso."</div>
   </div>
+  <div class="pedra-box pedra-preta" title="Pedra Preta">P</div>
+</div>
 
-  <div style="text-align:center;">
-    <button id="btn-adicionar">Adicionar Resultado</button>
-    <button id="btn-limpar">Limpar Histórico</button>
+<div class="inputs-container">
+  <div class="input-group">
+    <label for="num-vermelha">Número Vermelha</label>
+    <input type="number" id="num-vermelha" min="1" max="14" placeholder="Ex: 5" />
+    <label for="hora-vermelha">Hora (HH:MM:SS)</label>
+    <input type="text" id="hora-vermelha" placeholder="20:16:30" pattern="^\d{2}:\d{2}:\d{2}$" />
   </div>
-
-  <div id="mensagem-alerta"></div>
-  <div id="ultima-previsao"></div>
-
-  <div id="historico"></div>
-
-  <div style="text-align:center;">
-    <button id="btn-acertou" disabled>Acertou</button>
-    <button id="btn-errou" disabled>Errou</button>
+  <div class="input-group">
+    <label for="hora-branco">Hora Branco (HH:MM:SS)</label>
+    <input type="text" id="hora-branco" placeholder="20:17:00" pattern="^\d{2}:\d{2}:\d{2}$" />
   </div>
+  <div class="input-group">
+    <label for="num-preta">Número Preta</label>
+    <input type="number" id="num-preta" min="1" max="14" placeholder="Ex: 10" />
+    <label for="hora-preta">Hora (HH:MM:SS)</label>
+    <input type="text" id="hora-preta" placeholder="20:17:30" pattern="^\d{2}:\d{2}:\d{2}$" />
+  </div>
+</div>
 
-  <div id="status-aposta"></div>
+<div style="text-align:center; margin-bottom: 25px;">
+  <button id="btn-add-historico">Adicionar ao Histórico</button>
+  <button id="btn-limpar">Limpar Histórico</button>
+</div>
 
-  <canvas id="grafico" width="760" height="150"></canvas>
-</main>
+<textarea id="historico-textarea" placeholder="Cole aqui o histórico completo (horário + pedra)."></textarea>
+<br />
+<button id="btn-carregar-historico">Carregar Histórico</button>
+
+<div id="msg-previsao"></div>
+
+<div style="text-align:center; margin-top: 20px;">
+  <button id="btn-acertou">Acertou</button>
+  <button id="btn-errou">Errou</button>
+</div>
+
+<audio id="alert-sound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+<footer>
+  Desenvolvido por Scofield Analista - Use com responsabilidade
+</footer>
 
 <script>
-  // Utilidades
-  function parseHorario(text) {
-    // Espera "HH:MM:SS" 
-    const re = /^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/;
-    if (!re.test(text)) return null;
-    const [h, m, s] = text.split(':').map(Number);
-    return h * 3600 + m * 60 + s;
+  // Tabela de pedras para cores fixas conforme combinado
+  const pedrasVermelhas = new Set([1,2,3,4,5,6,7]);
+  const pedrasPretas = new Set([8,9,11,12,13,14]);
+  
+  // Histórico armazenado em localStorage (array de objetos: {hora, pedra, cor})
+  let historico = JSON.parse(localStorage.getItem('historicoScofield')) || [];
+  // Aprendizado simples, guarda acertos/erros de previsões
+  let aprendizado = JSON.parse(localStorage.getItem('aprendizadoScofield')) || {acertos: 0, erros: 0};
+
+  // Referências DOM
+  const txtHistorico = document.getElementById('historico-textarea');
+  const msgPrevisao = document.getElementById('msg-previsao');
+  const alertSound = document.getElementById('alert-sound');
+
+  function salvarHistorico() {
+    localStorage.setItem('historicoScofield', JSON.stringify(historico));
   }
-  function formatHorario(segundos) {
-    const h = Math.floor(segundos / 3600).toString().padStart(2, '0');
-    const m = Math.floor((segundos % 3600) / 60).toString().padStart(2, '0');
-    const s = (segundos % 60).toString().padStart(2, '0');
+  function salvarAprendizado() {
+    localStorage.setItem('aprendizadoScofield', JSON.stringify(aprendizado));
+  }
+
+  function parseHoraToSeconds(horaStr) {
+    // Espera formato HH:MM:SS
+    const parts = horaStr.split(':');
+    if(parts.length !== 3) return null;
+    const [h,m,s] = parts.map(Number);
+    if(isNaN(h)||isNaN(m)||isNaN(s)) return null;
+    return h*3600 + m*60 + s;
+  }
+
+  function secondsToHora(sec) {
+    const h = Math.floor(sec/3600).toString().padStart(2,'0');
+    const m = Math.floor((sec%3600)/60).toString().padStart(2,'0');
+    const s = Math.floor(sec%60).toString().padStart(2,'0');
     return `${h}:${m}:${s}`;
   }
 
-  // Classifica cor pela pedra
-  const pedrasVermelhas = [1,2,3,4,5,6,7];
-  const pedrasPretas = [8,9,11,12,13,14];
-
-  function getCorByNumero(numero) {
-    if (pedrasVermelhas.includes(numero)) return 'VERMELHO';
-    if (pedrasPretas.includes(numero)) return 'PRETO';
-    return 'INDEFINIDO';
+  // Função para identificar cor da pedra pelo número
+  function identificarCor(pedraNum) {
+    if(pedraNum === null || pedraNum === undefined || pedraNum === '') return 'branco';
+    const num = Number(pedraNum);
+    if(pedrasVermelhas.has(num)) return 'vermelha';
+    if(pedrasPretas.has(num)) return 'preta';
+    return 'desconhecida';
   }
 
-  // Dados e armazenamento
-  let historico = JSON.parse(localStorage.getItem('scofield_historico')) || [];
-  let aprendizado = JSON.parse(localStorage.getItem('scofield_aprendizado')) || {acertos:0, erros:0};
-  let ultimaPrevisao = null;
+  // Função para adicionar entrada manual ao histórico
+  document.getElementById('btn-add-historico').onclick = () => {
+    const numV = document.getElementById('num-vermelha').value.trim();
+    const horaV = document.getElementById('hora-vermelha').value.trim();
+    const horaB = document.getElementById('hora-branco').value.trim();
+    const numP = document.getElementById('num-preta').value.trim();
+    const horaP = document.getElementById('hora-preta').value.trim();
 
-  // Elementos
-  const vermelhoNumeroEl = document.getElementById('vermelho-numero');
-  const vermelhoHorarioEl = document.getElementById('vermelho-horario');
-  const brancoHorarioEl = document.getElementById('branco-horario');
-  const pretoNumeroEl = document.getElementById('preto-numero');
-  const pretoHorarioEl = document.getElementById('preto-horario');
-
-  const btnAdicionar = document.getElementById('btn-adicionar');
-  const btnLimpar = document.getElementById('btn-limpar');
-  const historicoEl = document.getElementById('historico');
-  const mensagemAlertaEl = document.getElementById('mensagem-alerta');
-  const ultimaPrevisaoEl = document.getElementById('ultima-previsao');
-  const btnAcertou = document.getElementById('btn-acertou');
-  const btnErrou = document.getElementById('btn-errou');
-  const statusApostaEl = document.getElementById('status-aposta');
-  const graficoCanvas = document.getElementById('grafico');
-  const ctxGrafico = graficoCanvas.getContext('2d');
-
-  // Função para renderizar histórico
-  function renderizarHistorico() {
-    if (historico.length === 0) {
-      historicoEl.textContent = '(Nenhum dado no histórico)';
-      return;
-    }
-    historicoEl.innerHTML = historico.map((item, idx) => {
-      const cor = item.cor || 'INDEFINIDO';
-      const horario = formatHorario(item.horario);
-      return `${idx+1}. Pedra: ${item.numero || '-'} - Cor: ${cor} - Horário: ${horario}`;
-    }).join('<br/>');
-  }
-
-  // Função para salvar no localStorage
-  function salvarDados() {
-    localStorage.setItem('scofield_historico', JSON.stringify(historico));
-    localStorage.setItem('scofield_aprendizado', JSON.stringify(aprendizado));
-  }
-
-  // Função para adicionar resultado manual
-  function adicionarResultado() {
-    mensagemAlertaEl.textContent = '';
-    const vNum = Number(vermelhoNumeroEl.value);
-    const vHora = parseHorario(vermelhoHorarioEl.value.trim());
-    const bHora = parseHorario(brancoHorarioEl.value.trim());
-    const pNum = Number(pretoNumeroEl.value);
-    const pHora = parseHorario(pretoHorarioEl.value.trim());
-
-    if (!vNum || vNum <1 || vNum >14) {
-      alert('Número da pedra vermelha inválido (1-14)');
-      return;
-    }
-    if (vHora === null) {
-      alert('Horário da pedra vermelha inválido. Use HH:MM:SS');
-      return;
-    }
-    if (bHora === null) {
-      alert('Horário do branco inválido. Use HH:MM:SS');
-      return;
-    }
-    if (!pNum || pNum <1 || pNum >14) {
-      alert('Número da pedra preta inválido (1-14)');
-      return;
-    }
-    if (pHora === null) {
-      alert('Horário da pedra preta inválido. Use HH:MM:SS');
+    if(!horaV.match(/^\d{2}:\d{2}:\d{2}$/) || !horaB.match(/^\d{2}:\d{2}:\d{2}$/) || !horaP.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      alert('Digite horários válidos no formato HH:MM:SS.');
       return;
     }
 
-    // Armazena as pedras anteriores, branco e posterior
-    // Primeiro vermelha
+    // Adiciona vermelha
     historico.push({
-      numero: vNum,
-      cor: 'VERMELHO',
-      horario: vHora
+      hora: horaV,
+      pedra: numV || null,
+      cor: identificarCor(numV)
     });
-    // Branco (sem número)
+    // Branco
     historico.push({
-      numero: null,
-      cor: 'BRANCO',
-      horario: bHora
+      hora: horaB,
+      pedra: null,
+      cor: 'branco'
     });
     // Preta
     historico.push({
-      numero: pNum,
-      cor: 'PRETO',
-      horario: pHora
+      hora: horaP,
+      pedra: numP || null,
+      cor: identificarCor(numP)
     });
 
-    salvarDados();
-    renderizarHistorico();
+    salvarHistorico();
+    carregarHistoricoNaTextarea();
     limparInputs();
-    analisarHistorico();
-    prepararBotoesAcertoErro(false);
-  }
+    analisarPrevisao();
+  };
 
   function limparInputs() {
-    vermelhoNumeroEl.value = '';
-    vermelhoHorarioEl.value = '';
-    brancoHorarioEl.value = '';
-    pretoNumeroEl.value = '';
-    pretoHorarioEl.value = '';
+    document.getElementById('num-vermelha').value = '';
+    document.getElementById('hora-vermelha').value = '';
+    document.getElementById('hora-branco').value = '';
+    document.getElementById('num-preta').value = '';
+    document.getElementById('hora-preta').value = '';
   }
 
-  btnAdicionar.addEventListener('click', adicionarResultado);
-  btnLimpar.addEventListener('click', () => {
-    if (confirm('Deseja realmente limpar todo o histórico e aprendizado?')) {
+  // Função para limpar histórico
+  document.getElementById('btn-limpar').onclick = () => {
+    if(confirm('Tem certeza que deseja limpar o histórico?')) {
       historico = [];
-      aprendizado = {acertos:0, erros:0};
-      salvarDados();
-      renderizarHistorico();
-      mensagemAlertaEl.textContent = '';
-      ultimaPrevisaoEl.textContent = '';
-      statusApostaEl.textContent = '';
-      prepararBotoesAcertoErro(true);
-      limparInputs();
-      limparGrafico();
+      salvarHistorico();
+      carregarHistoricoNaTextarea();
+      msgPrevisao.textContent = '';
     }
-  });
+  };
 
-  // Função para preparar botões acertou/errou
-  function prepararBotoesAcertoErro(disabled) {
-    btnAcertou.disabled = disabled;
-    btnErrou.disabled = disabled;
+  // Carregar histórico da textarea para a variável
+  document.getElementById('btn-carregar-historico').onclick = () => {
+    const texto = txtHistorico.value.trim();
+    if(!texto) {
+      alert('Cole o histórico antes de carregar.');
+      return;
+    }
+    const linhas = texto.split('\n').map(l => l.trim()).filter(l => l !== '');
+    // Espera pares linha: horário ou número, alternados
+    let novoHistorico = [];
+    for(let i=0; i < linhas.length; i++) {
+      const linha = linhas[i];
+      // Detecta se é horário ou número (numérico ou vazio para branco)
+      if(linha.match(/^\d{2}:\d{2}:\d{2}$/)) {
+        // Horário - verificar próxima linha para pedra
+        if(i > 0) {
+          let pedraRaw = linhas[i-1];
+          let cor = identificarCor(pedraRaw);
+          // Se pedraRaw for horário também (ex: sequência só de horários), considera branco
+          if(pedraRaw.match(/^\d{2}:\d{2}:\d{2}$/)) cor = 'branco';
+          novoHistorico.push({
+            hora: linha,
+            pedra: cor === 'branco' ? null : Number(pedraRaw),
+            cor
+          });
+        }
+      } else {
+        // Se for número, próxima linha tem que ser horário para formar par
+        if(i+1 < linhas.length && linhas[i+1].match(/^\d{2}:\d{2}:\d{2}$/)) {
+          // já processado na iteração do horário
+          continue;
+        } else {
+          // Pedra sem horário => ignorar
+          continue;
+        }
+      }
+    }
+    historico = novoHistorico;
+    salvarHistorico();
+    carregarHistoricoNaTextarea();
+    analisarPrevisao();
+    alert('Histórico carregado com ' + historico.length + ' pedras.');
+  };
+
+  function carregarHistoricoNaTextarea() {
+    // Monta texto simples para exibir no textarea
+    let texto = '';
+    for(const item of historico) {
+      const numStr = item.pedra === null ? '' : item.pedra.toString();
+      texto += numStr + '\n' + item.hora + '\n';
+    }
+    txtHistorico.value = texto.trim();
   }
 
-  // Função para registrar acerto
-  btnAcertou.addEventListener('click', () => {
+  // Função de previsão simples: procura o último branco no histórico e tenta prever o próximo branco baseado no intervalo médio entre brancos
+  function analisarPrevisao() {
+    if(historico.length === 0) {
+      msgPrevisao.textContent = 'Sem histórico para analisar.';
+      return;
+    }
+    // Filtrar brancos e ordenar por hora
+    const brancos = historico.filter(i => i.cor === 'branco').sort((a,b) => parseHoraToSeconds(a.hora) - parseHoraToSeconds(b.hora));
+    if(brancos.length < 2) {
+      msgPrevisao.textContent = 'Mais dados de brancos necessários para prever.';
+      return;
+    }
+    // Calcular intervalos médios entre brancos (em segundos)
+    let diffs = [];
+    for(let i=1; i < brancos.length; i++) {
+      const s1 = parseHoraToSeconds(brancos[i-1].hora);
+      const s2 = parseHoraToSeconds(brancos[i].hora);
+      if(s1 !== null && s2 !== null) diffs.push(s2 - s1);
+    }
+    if(diffs.length === 0) {
+      msgPrevisao.textContent = 'Dados insuficientes para calcular intervalos.';
+      return;
+    }
+    const mediaIntervalo = diffs.reduce((a,b) => a+b, 0) / diffs.length;
+
+    // Último branco
+    const ultimoBranco = brancos[brancos.length - 1];
+    const ultimoSeg = parseHoraToSeconds(ultimoBranco.hora);
+
+    if(ultimoSeg === null) {
+      msgPrevisao.textContent = 'Erro ao interpretar horário do último branco.';
+      return;
+    }
+    const previsaoSeg = ultimoSeg + mediaIntervalo;
+    const previsaoHora = secondsToHora(previsaoSeg);
+
+    msgPrevisao.textContent = `PRÓXIMO BRANCO PROVÁVEL EM ${previsaoHora} — PREPARA!`;
+
+    // Se estiver próximo (menos de 10 segundos) toca som
+    const agora = new Date();
+    const agoraSeg = agora.getHours()*3600 + agora.getMinutes()*60 + agora.getSeconds();
+    if(Math.abs(previsaoSeg - agoraSeg) <= 10) {
+      alertSound.play();
+    }
+  }
+
+  // Botões acertou / errou para aprendizado simples
+  document.getElementById('btn-acertou').onclick = () => {
     aprendizado.acertos++;
-    salvarDados();
-    mensagemAlertaEl.textContent = 'Obrigado! Acerto registrado.';
-    prepararBotoesAcertoErro(true);
-  });
-
-  // Função para registrar erro
-  btnErrou.addEventListener('click', () => {
+    salvarAprendizado();
+    alert(`Obrigado! Total Acertos: ${aprendizado.acertos}`);
+  };
+  document.getElementById('btn-errou').onclick = () => {
     aprendizado.erros++;
-    salvarDados();
-    mensagemAlertaEl.textContent = 'Erro registrado. Vamos melhorar!';
-    prepararBotoesAcertoErro(true);
-  });
+    salvarAprendizado();
+    alert(`Que pena! Total Erros: ${aprendizado.erros}`);
+  };
 
-  // Limpar gráfico
-  function limparGrafico() {
-    ctxGrafico.clearRect(0,0,graficoCanvas.width,graficoCanvas.height);
-  }
-
-  // Função para desenhar gráfico básico de probabilidade (simples)
-  function desenharGrafico(probabilidades) {
-    limparGrafico();
-    if (!probabilidades || probabilidades.length === 0) return;
-
-    const maxProb = Math.max(...probabilidades);
-    const scaleY = graficoCanvas.height / (maxProb || 1);
-    const passoX = graficoCanvas.width / (probabilidades.length - 1);
-
-    ctxGrafico.strokeStyle = '#E03B3B';
-    ctxGrafico.lineWidth = 3;
-    ctxGrafico.beginPath();
-
-    probabilidades.forEach((p, i) => {
-      const x = i * passoX;
-      const y = graficoCanvas.height - p * scaleY;
-      if (i === 0) ctxGrafico.moveTo(x,y);
-      else ctxGrafico.lineTo(x,y);
-    });
-    ctxGrafico.stroke();
-  }
-
-  // Função que faz a análise do histórico e tenta prever branco
-  function analisarHistorico() {
-    if (historico.length < 3) {
-      ultimaPrevisaoEl.textContent = 'Mais dados são necessários para prever o branco.';
-      prepararBotoesAcertoErro(true);
-      limparGrafico();
-      return;
-    }
-
-    // Exemplo de estratégia simples: calcular intervalos entre brancos
-    const brancos = historico.filter(item => item.cor === 'BRANCO');
-    if (brancos.length < 2) {
-      ultimaPrevisaoEl.textContent = 'Ainda não há histórico suficiente de brancos para previsão.';
-      prepararBotoesAcertoErro(true);
-      limparGrafico();
-      return;
-    }
-
-    // Calcular intervalos entre brancos
-    let intervalos = [];
-    for(let i=1; i<brancos.length; i++){
-      intervalos.push(brancos[i].horario - brancos[i-1].horario);
-    }
-
-    // Média dos intervalos
-    const mediaIntervalo = intervalos.reduce((a,b) => a+b,0) / intervalos.length;
-
-    // Previsão do próximo branco
-    const ultimoBranco = brancos[brancos.length-1];
-    const proximoBrancoTempo = ultimoBranco.horario + mediaIntervalo;
-
-    // Checar se próximo branco está no futuro (dentro do dia)
-    if (proximoBrancoTempo > 86399) {
-      ultimaPrevisaoEl.textContent = 'Previsão do branco está fora do horário do dia.';
-      prepararBotoesAcertoErro(true);
-      limparGrafico();
-      return;
-    }
-
-    // Mostrar a previsão formatada
-    ultimaPrevisao = proximoBrancoTempo;
-    ultimaPrevisaoEl.textContent = `PRÓXIMO BRANCO PROVÁVEL EM ${formatHorario(proximoBrancoTempo)} — PREPARA!`;
-
-    // Acionar aviso sonoro e visual
-    avisarUsuario();
-
-    // Habilitar botões de acerto/erro
-    prepararBotoesAcertoErro(false);
-
-    // Gerar probabilidades para gráfico (simples)
-    const probabilidades = intervalos.map(i => Math.min(1, i / mediaIntervalo));
-    desenharGrafico(probabilidades);
-
-    // Mostrar status do sinal (forte ou arriscado)
-    const erroTaxa = aprendizado.erros + aprendizado.acertos === 0 ? 0 : aprendizado.erros / (aprendizado.erros + aprendizado.acertos);
-    if (erroTaxa < 0.3) {
-      statusApostaEl.textContent = 'Sinal FORTE para apostar!';
-      statusApostaEl.style.color = '#4caf50';
-    } else if (erroTaxa < 0.6) {
-      statusApostaEl.textContent = 'Sinal ARRISCADO. Atenção!';
-      statusApostaEl.style.color = '#e6b800';
-    } else {
-      statusApostaEl.textContent = 'Sinal FRACO. Melhor aguardar mais dados.';
-      statusApostaEl.style.color = '#e03b3b';
-    }
-  }
-
-  // Função para aviso sonoro e visual
-  function avisarUsuario() {
-    mensagemAlertaEl.textContent = '⚠️ Scofield alerta: Branco próximo! Prepare-se!';
-    // Som simples usando beep do browser via AudioContext
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch(e) {
-      // Não suportado
-    }
-  }
-
-  // Inicialização
-  renderizarHistorico();
-  analisarHistorico();
-  prepararBotoesAcertoErro(true);
-
-  // Atualizar previsão a cada 10s (simulação)
-  setInterval(() => {
-    analisarHistorico();
-  }, 10000);
-
+  // Ao carregar a página, carrega histórico e faz análise
+  window.onload = () => {
+    carregarHistoricoNaTextarea();
+    analisarPrevisao();
+  };
 </script>
 
 </body>
