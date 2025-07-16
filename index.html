@@ -1,83 +1,115 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Scofield Analista</title>
-  <style>
-    body {
-      background: #121212;
-      color: #eee;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-    }
-    h1, h2 {
-      text-align: center;
-      color: #00ffcc;
-    }
-    textarea, input, button {
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    button {
-      background-color: #00b894;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #019875;
-    }
-    .section {
-      margin-top: 30px;
-      padding: 20px;
-      background: #1f1f1f;
-      border-radius: 10px;
-    }
-    .success {
-      color: #0f0;
-      font-weight: bold;
-    }
-    .error {
-      color: #f55;
-      font-weight: bold;
-    }
-    .prediction {
-      font-size: 18px;
-      margin-top: 10px;
-    }
-    .chart, .history {
-      font-size: 14px;
-      white-space: pre-wrap;
-      background: #2a2a2a;
-      padding: 10px;
-      border-radius: 5px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Scofield Analista Completo</title>
+<style>
+  /* Reset e básico */
+  body {
+    margin: 0; padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #eee;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  h1, h2 {
+    text-align: center;
+    color: #00ffcc;
+  }
+  textarea, input, button, select {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #00b894;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover {
+    background-color: #019875;
+  }
+  .section {
+    background: #1f1f1f;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  .success {
+    color: #0f0;
+    font-weight: bold;
+  }
+  .error {
+    color: #f55;
+    font-weight: bold;
+  }
+  .prediction {
+    font-size: 18px;
+    margin-top: 10px;
+  }
+  .chart, .history, .report-area {
+    font-size: 14px;
+    white-space: pre-wrap;
+    background: #2a2a2a;
+    padding: 10px;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .dark-mode {
+    background-color: #121212;
+    color: #eee;
+  }
+  .light-mode {
+    background-color: #eee;
+    color: #121212;
+  }
+  .dark-mode textarea, .dark-mode input, .dark-mode button, .dark-mode select {
+    background-color: #333;
+    color: #eee;
+  }
+  .light-mode textarea, .light-mode input, .light-mode button, .light-mode select {
+    background-color: #fff;
+    color: #121212;
+  }
+</style>
 </head>
-<body>
-  <h1>Scofield Analista</h1>
+<body class="dark-mode">
+  <h1>Scofield Analista Completo</h1>
 
-  <div class="section">
+  <div class="section" id="modeToggleSection">
+    <label for="modeToggle">Modo Visual:</label>
+    <select id="modeToggle" onchange="toggleMode()">
+      <option value="dark" selected>Dark Mode</option>
+      <option value="light">Light Mode</option>
+    </select>
+  </div>
+
+  <div class="section" id="studySection">
     <h2>🧠 Histórico de Estudo</h2>
     <textarea id="studyInput" rows="10" placeholder="Cole aqui o histórico de estudo (valores + horários)..."></textarea>
     <button onclick="analyzeHistory()">Analisar Histórico</button>
+    <button onclick="clearHistoryInput()">Limpar Histórico</button>
     <div id="historyStatus"></div>
     <div id="strategyCount" class="success"></div>
   </div>
 
-  <div class="section">
+  <div class="section" id="patternSection">
     <h2>🧪 Análise de Padrão Atual (Tempo Real)</h2>
     <textarea id="patternInput" rows="10" placeholder="Cole aqui o padrão atual com 3 brancos e penúltimo com 5 pedras antes..."></textarea>
     <button onclick="analyzePattern()">Analisar Padrão</button>
+    <button onclick="clearPatternInput()">Limpar Análise</button>
     <div id="patternStatus"></div>
     <div class="prediction" id="nextPrediction"></div>
   </div>
 
-  <div class="section">
+  <div class="section" id="predictionHistorySection">
     <h2>📈 Histórico de Previsões</h2>
     <div id="predictionLog" class="chart"></div>
     <div id="accuracyRate" class="success"></div>
@@ -85,77 +117,65 @@
     <button onclick="markResult(false)">❌ Errou</button>
   </div>
 
-  <script>
-    let strategies = [];
-    let predictionHistory = [];
-    let hits = 0;
-    let misses = 0;
+  <div class="section" id="reportSection" style="display:none;">
+    <h2>📊 Relatórios e Gráficos</h2>
+    <button onclick="exportReportCSV()">Exportar CSV</button>
+    <button onclick="exportReportPDF()">Exportar PDF</button>
+    <div id="reportArea" class="report-area"></div>
+  </div>
 
-    function parseHistory(raw) {
-      const lines = raw.trim().split('\\n');
-      const entries = [];
-      for (let i = 0; i < lines.length - 1; i += 2) {
-        let value = lines[i].trim();
-        let time = lines[i + 1].trim();
-        if (value === '' || isNaN(Number(value))) {
-          entries.push({ color: 'branco', time });
-        } else {
-          let num = Number(value);
-          let color = num >= 1 && num <= 7 ? 'vermelho' : num >= 8 && num <= 14 ? 'preto' : 'desconhecido';
-          entries.push({ number: num, color, time });
-        }
-      }
-      return entries;
+  <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+<script>
+  // Parte 1 - Variáveis globais e setup inicial
+  let strategies = [];
+  let predictionHistory = [];
+  let hits = 0;
+  let misses = 0;
+  let learningMode = 'full'; // 'full' = análise completa; 'simple' = após primeira análise
+  let lastStrategyUsed = null;
+
+  // Toggle modo dark/light
+  function toggleMode() {
+    const mode = document.getElementById('modeToggle').value;
+    if (mode === 'dark') {
+      document.body.classList.remove('light-mode');
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.body.classList.add('light-mode');
     }
+  }
 
-    function analyzeHistory() {
-      const input = document.getElementById('studyInput').value;
-      const parsed = parseHistory(input);
-      let newStrategies = Math.floor(Math.random() * 3) + 1; // Simula número de estratégias
-      strategies.push(...Array(newStrategies).fill({}));
-      document.getElementById('historyStatus').innerHTML = '<span class="success">Histórico analisado com sucesso ✅</span>';
-      document.getElementById('strategyCount').innerText = `🧠 ${newStrategies} estratégias criadas`;
-    }
+  // Função para limpar textarea do histórico de estudo
+  function clearHistoryInput() {
+    document.getElementById('studyInput').value = '';
+    document.getElementById('historyStatus').innerText = '';
+    document.getElementById('strategyCount').innerText = '';
+  }
 
-    function analyzePattern() {
-      const input = document.getElementById('patternInput').value;
-      const parsed = parseHistory(input);
-      if (parsed.length < 2) {
-        document.getElementById('patternStatus').innerHTML = '<span class="error">Colagem insuficiente para análise</span>';
-        return;
-      }
-      const now = new Date();
-      now.setMinutes(now.getMinutes() + Math.floor(Math.random() * 5) + 1);
-      now.setSeconds(0);
-      const timeStr = now.toTimeString().split(' ')[0];
-      const confidence = Math.floor(65 + Math.random() * 30);
-      const signalStrength = confidence > 80 ? 'Forte' : 'Arriscado';
-      document.getElementById('patternStatus').innerHTML = '<span class="success">Análise feita com sucesso ✅</span>';
-      const predictionText = `🎯 Próximo branco provável às: ${timeStr}<br>🔥 Força do sinal: ${signalStrength}<br>📈 Confiança: ${confidence}%`;
-      document.getElementById('nextPrediction').innerHTML = predictionText;
-      predictionHistory.push({ time: timeStr, confidence, result: null });
-      updatePredictionLog();
-    }
+  // Função para limpar textarea do padrão atual
+  function clearPatternInput() {
+    document.getElementById('patternInput').value = '';
+    document.getElementById('patternStatus').innerText = '';
+    document.getElementById('nextPrediction').innerText = '';
+  }
 
-    function updatePredictionLog() {
-      const log = predictionHistory.map((p, i) => {
-        let status = p.result === true ? '✅' : p.result === false ? '❌' : '⏳';
-        return `#${i + 1} - ${p.time} - Confiança: ${p.confidence}% - ${status}`;
-      }).join('\\n');
-      document.getElementById('predictionLog').innerText = log;
-      const total = hits + misses;
-      const accuracy = total > 0 ? ((hits / total) * 100).toFixed(1) : 0;
-      document.getElementById('accuracyRate').innerText = `🎯 Taxa de acerto: ${accuracy}% (${hits} acertos / ${misses} erros)`;
-    }
-
-    function markResult(isHit) {
-      const last = predictionHistory[predictionHistory.length - 1];
-      if (last && last.result === null) {
-        last.result = isHit;
-        if (isHit) hits++; else misses++;
-        updatePredictionLog();
+  // Função para parsear histórico (valores e horários)
+  function parseHistory(raw) {
+    const lines = raw.trim().split('\\n');
+    const entries = [];
+    for (let i = 0; i < lines.length - 1; i += 2) {
+      let value = lines[i].trim();
+      let time = lines[i + 1].trim();
+      if (value === '' || isNaN(Number(value))) {
+        entries.push({ color: 'branco', time });
+      } else {
+        let num = Number(value);
+        let color = num >= 1 && num <= 7 ? 'vermelho' : num >= 8 && num <= 14 ? 'preto' : 'desconhecido';
+        entries.push({ number: num, color, time });
       }
     }
-  </script>
-</body>
-</html>
+    return entries;
+  }
+</script>
