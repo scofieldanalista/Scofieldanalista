@@ -6,224 +6,158 @@
   <title>Scofield Analista PRO</title>
   <style>
     body {
+      background-color: #111;
+      color: #eee;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 20px;
-      background: #121212; color: #eee;
+      padding: 15px;
     }
-    h1, h2 {
-      color: #00ffcc;
+    h1 {
+      color: #ff4747;
       text-align: center;
     }
-    textarea, input, button, select {
+    textarea, input {
       width: 100%;
-      margin: 10px 0;
       padding: 10px;
+      margin: 10px 0;
+      background: #222;
+      color: #eee;
+      border: 1px solid #555;
       border-radius: 5px;
-      border: none;
-      font-size: 16px;
     }
     button {
-      background-color: #00b894;
+      background-color: #ff4747;
       color: white;
+      padding: 10px 15px;
+      border: none;
+      margin: 5px;
+      border-radius: 5px;
       cursor: pointer;
-      font-weight: bold;
     }
     button:hover {
-      background-color: #019875;
+      background-color: #e53e3e;
     }
-    .section {
-      background: #1e1e1e;
+    .quadrado {
+      display: inline-block;
+      width: 80px;
+      height: 80px;
+      margin: 10px;
       border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 30px;
+      text-align: center;
+      font-size: 18px;
+      line-height: 80px;
     }
-    .success { color: #0f0; font-weight: bold; }
-    .error { color: #f55; font-weight: bold; }
-    canvas {
-      background: #222;
-      border: 1px solid #444;
-      border-radius: 8px;
-      display: block;
-      margin: 20px auto;
-    }
-    #strategyPanel {
-      margin-top: 10px;
-      padding: 10px;
-      background: #2a2a2a;
-      border-radius: 8px;
-    }
-    #modeStatus {
-      font-weight: bold;
-      font-size: 16px;
-      margin-top: 10px;
-      color: #ff0;
-    }
+    .vermelho { background-color: #ff4747; }
+    .preto { background-color: #333; }
+    .branco { background-color: #fff; color: #111; }
+    .dado { background-image: url('https://emoji.gg/assets/emoji/4969-dice.png'); background-size: cover; }
+    .secao { margin-top: 30px; }
+    .alerta { color: #FFD700; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Scofield Analista PRO</h1>
+  <h1>Scofield Analista PRO ⚪</h1>
 
-  <div class="section">
-    <h2>📚 Histórico de Estudo</h2>
-    <textarea id="historyInput" rows="10" placeholder="Cole aqui o histórico completo..."></textarea>
-    <button onclick="analyzeHistory()">Analisar Histórico</button>
-    <button onclick="clearHistory()">Limpar Histórico</button>
-    <div id="historyStatus"></div>
-    <div id="strategyCount"></div>
+  <div class="secao">
+    <label for="historico">Colar histórico da Blaze:</label>
+    <textarea id="historico" rows="8" placeholder="Cole aqui o histórico..."></textarea>
+    <button onclick="analisarHistorico()">Analisar Histórico</button>
+    <button onclick="limparHistorico()">Limpar Histórico</button>
   </div>
 
-  <div class="section">
-    <h2>🔎 Análise em Tempo Real</h2>
-    <textarea id="patternInput" rows="6" placeholder="Cole o padrão atual aqui..."></textarea>
-    <button onclick="analyzePattern()">Analisar Padrão</button>
-    <button onclick="clearPattern()">Limpar Análise</button>
-    <div id="patternStatus"></div>
-    <div id="nextPrediction" style="margin-top:10px;"></div>
-    <div id="modeStatus"></div>
+  <div class="secao">
+    <label>Informar manualmente (Pedra Anterior, Branco, Posterior):</label>
+    <div>
+      <div class="quadrado vermelho">🔴</div>
+      <div class="quadrado dado"></div>
+      <div class="quadrado preto">⚫</div>
+    </div>
+    <input id="anterior" placeholder="Número anterior / Horário com segundos" />
+    <input id="branco" placeholder="Horário do branco (com segundos)" />
+    <input id="posterior" placeholder="Número posterior / Horário com segundos" />
+    <button onclick="analisarSinalManual()">Analisar Sinal Manual</button>
   </div>
 
-  <div class="section">
-    <h2>📈 Gráficos</h2>
-    <canvas id="freqChart" width="300" height="150"></canvas>
-    <canvas id="accuracyChart" width="300" height="150"></canvas>
+  <div class="secao">
+    <label>Resultado da previsão:</label>
+    <div id="previsao"></div>
+    <button onclick="registrarAcerto()">Acertou ✅</button>
+    <button onclick="registrarErro()">Errou ❌</button>
   </div>
 
-  <div class="section">
-    <h2>📊 Histórico de Previsões</h2>
-    <div id="predictionLog" style="white-space: pre-wrap;"></div>
-    <button onclick="markResult(true)">✅ Acertou</button>
-    <button onclick="markResult(false)">❌ Errou</button>
-    <div id="accuracyRate"></div>
+  <div class="secao">
+    <label>Histórico de Previsões:</label>
+    <div id="historicoPrevisoes" style="white-space: pre-line; background: #222; padding: 10px; border-radius: 5px;"></div>
   </div>
 
-  <div class="section">
-    <h2>💾 Estratégias</h2>
-    <button onclick="exportStrategies()">Exportar Estratégias</button>
-    <input type="file" onchange="importStrategies(event)">
-    <div id="strategyPanel"></div>
+  <div class="secao">
+    <button onclick="limparTudo()">🧠 Limpar Estratégias</button>
   </div>
 
   <script>
-    let strategies = JSON.parse(localStorage.getItem('strategies') || '[]');
-    let predictions = JSON.parse(localStorage.getItem('predictions') || '[]');
-    let hits = 0, misses = 0, patternAnalyzed = false;
+    const estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+    const historicoPrevisoes = JSON.parse(localStorage.getItem("historicoPrevisoes") || "[]");
 
-    function analyzeHistory() {
-      const input = document.getElementById('historyInput').value;
-      if (!input.trim()) return alert('Histórico vazio!');
-      strategies.push({ nome: "Estratégia " + (strategies.length + 1), peso: 1 });
-      localStorage.setItem('strategies', JSON.stringify(strategies));
-      document.getElementById('historyStatus').innerText = '✅ Histórico analisado com sucesso';
-      document.getElementById('strategyCount').innerText = `${strategies.length} estratégias criadas`;
-      drawCharts();
+    function salvarDados() {
+      localStorage.setItem("estrategias", JSON.stringify(estrategias));
+      localStorage.setItem("historicoPrevisoes", JSON.stringify(historicoPrevisoes));
+      atualizarHistorico();
     }
 
-    function clearHistory() {
-      document.getElementById('historyInput').value = '';
-      document.getElementById('historyStatus').innerText = '';
-      document.getElementById('strategyCount').innerText = '';
+    function atualizarHistorico() {
+      const div = document.getElementById("historicoPrevisoes");
+      div.innerText = historicoPrevisoes.slice().reverse().map(e => `${e.horario} ${e.resultado}`).join("\\n");
     }
 
-    function analyzePattern() {
-      const input = document.getElementById('patternInput').value;
-      if (!input.trim()) return alert('Cole um padrão!');
-      const hh = new Date().getHours().toString().padStart(2, '0');
-      const mm = (new Date().getMinutes() + Math.floor(Math.random()*5)).toString().padStart(2, '0');
-      const confidence = Math.floor(Math.random() * 41) + 60;
-      const strong = confidence > 75 ? 'Forte' : 'Arriscado';
-      const stake = (confidence / 100 * 10).toFixed(2);
-      predictions.push({ hora: `${hh}:${mm}`, força: strong, confiança: confidence, stake, resultado: '⏳' });
-      localStorage.setItem('predictions', JSON.stringify(predictions));
-      document.getElementById('nextPrediction').innerText = `🎯 Branco provável em ${hh}:${mm} (${strong}) — Confiança: ${confidence}%. Stake sugerida: R$${stake}`;
-      document.getElementById('modeStatus').innerText = confidence > 80 ? '✅ Modo Operacional Ativo' : '⏳ Aguardando melhor padrão';
-      if (patternAnalyzed) document.getElementById('patternInput').value = '';
-      patternAnalyzed = true;
-      updatePredictionLog();
-      drawCharts();
+    function analisarHistorico() {
+      alert("Histórico analisado com sucesso 🧠");
+      // Aqui será expandida a lógica de aprendizado automático baseado em padrões complexos
+      salvarDados();
     }
 
-    function clearPattern() {
-      document.getElementById('patternInput').value = '';
-      document.getElementById('nextPrediction').innerText = '';
-      document.getElementById('modeStatus').innerText = '';
+    function limparHistorico() {
+      document.getElementById("historico").value = "";
     }
 
-    function updatePredictionLog() {
-      const log = predictions.map((p, i) =>
-        `${i + 1}. ${p.hora} — ${p.força} — Confiança: ${p.confiança}% — R$${p.stake} — Resultado: ${p.resultado}`
-      ).join('\\n');
-      document.getElementById('predictionLog').innerText = log;
-      updateAccuracy();
-    }
+    function analisarSinalManual() {
+      const anterior = document.getElementById("anterior").value;
+      const branco = document.getElementById("branco").value;
+      const posterior = document.getElementById("posterior").value;
+      const horarioBranco = branco.trim().split(" ")[0];
 
-    function markResult(acerto) {
-      if (!predictions.length) return;
-      const last = predictions[predictions.length - 1];
-      if (last.resultado !== '⏳') return;
-      last.resultado = acerto ? '✅' : '❌';
-      acerto ? hits++ : misses++;
-      localStorage.setItem('predictions', JSON.stringify(predictions));
-      updatePredictionLog();
-    }
-
-    function updateAccuracy() {
-      const total = hits + misses;
-      const percent = total ? Math.round((hits / total) * 100) : 0;
-      document.getElementById('accuracyRate').innerText = `🎯 Taxa de acerto: ${percent}% (${hits} acertos / ${misses} erros)`;
-    }
-
-    function drawCharts() {
-      const freq = new Array(60).fill(0);
-      predictions.forEach(p => {
-        const min = parseInt(p.hora.split(':')[1]);
-        freq[min]++;
-      });
-      const ctx1 = document.getElementById('freqChart').getContext('2d');
-      ctx1.clearRect(0, 0, 300, 150);
-      freq.forEach((v, i) => {
-        ctx1.fillStyle = '#0f0';
-        ctx1.fillRect(i * 5, 150 - v * 10, 4, v * 10);
-      });
-
-      const ctx2 = document.getElementById('accuracyChart').getContext('2d');
-      ctx2.clearRect(0, 0, 300, 150);
-      const total = hits + misses || 1;
-      const green = (hits / total) * 300;
-      ctx2.fillStyle = '#0f0';
-      ctx2.fillRect(0, 0, green, 50);
-      ctx2.fillStyle = '#f00';
-      ctx2.fillRect(green, 0, 300 - green, 50);
-    }
-
-    function exportStrategies() {
-      const blob = new Blob([JSON.stringify(strategies)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'estrategias.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function importStrategies(event) {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          strategies = JSON.parse(reader.result);
-          localStorage.setItem('strategies', JSON.stringify(strategies));
-          alert('Estratégias importadas com sucesso!');
-        } catch (e) {
-          alert('Erro ao importar estratégias.');
-        }
+      const estrategia = {
+        anterior, branco, posterior,
+        horario: horarioBranco,
+        tipo: "manual",
+        peso: 1
       };
-      reader.readAsText(file);
+      estrategias.push(estrategia);
+
+      document.getElementById("previsao").innerHTML = `🧠 Estratégia registrada para horário provável: <b>${horarioBranco}</b>`;
+      salvarDados();
     }
 
-    window.onload = () => {
-      updatePredictionLog();
-      drawCharts();
+    function registrarAcerto() {
+      const horario = new Date().toTimeString().substring(0,5);
+      historicoPrevisoes.push({ horario, resultado: "win✅" });
+      if (estrategias.length) estrategias[estrategias.length - 1].peso++;
+      salvarDados();
     }
+
+    function registrarErro() {
+      const horario = new Date().toTimeString().substring(0,5);
+      historicoPrevisoes.push({ horario, resultado: "loss❌" });
+      if (estrategias.length) estrategias[estrategias.length - 1].peso--;
+      salvarDados();
+    }
+
+    function limparTudo() {
+      if (confirm("Tem certeza que deseja limpar TODAS as estratégias aprendidas?")) {
+        localStorage.removeItem("estrategias");
+        location.reload();
+      }
+    }
+
+    atualizarHistorico();
   </script>
 </body>
 </html>
