@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scofield Analista PRO</title>
+  <title>Scofield Analista PRO - Automático</title>
   <style>
     body {
       background-color: #111;
@@ -36,26 +36,11 @@
     button:hover {
       background-color: #e53e3e;
     }
-    .quadrado {
-      display: inline-block;
-      width: 80px;
-      height: 80px;
-      margin: 10px;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 18px;
-      line-height: 80px;
-    }
-    .vermelho { background-color: #ff4747; }
-    .preto { background-color: #333; }
-    .branco { background-color: #fff; color: #111; }
-    .dado { background-image: url('https://emoji.gg/assets/emoji/4969-dice.png'); background-size: cover; }
     .secao { margin-top: 30px; }
-    .alerta { color: #FFD700; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Scofield Analista PRO ⚪</h1>
+  <h1>Scofield Analista PRO ⚪ (Automático)</h1>
 
   <div class="secao">
     <label for="historico">Colar histórico da Blaze:</label>
@@ -65,21 +50,8 @@
   </div>
 
   <div class="secao">
-    <label>Informar manualmente (Pedra Anterior, Branco, Posterior):</label>
-    <div>
-      <div class="quadrado vermelho">🔴</div>
-      <div class="quadrado dado"></div>
-      <div class="quadrado preto">⚫</div>
-    </div>
-    <input id="anterior" placeholder="Número anterior / Horário com segundos" />
-    <input id="branco" placeholder="Horário do branco (com segundos)" />
-    <input id="posterior" placeholder="Número posterior / Horário com segundos" />
-    <button onclick="analisarSinalManual()">Analisar Sinal Manual</button>
-  </div>
-
-  <div class="secao">
-    <label>Resultado da previsão:</label>
-    <div id="previsao"></div>
+    <label>Próximos brancos prováveis:</label>
+    <div id="previsao" style="white-space: pre-line; background: #222; padding: 10px; border-radius: 5px;"></div>
     <button onclick="registrarAcerto()">Acertou ✅</button>
     <button onclick="registrarErro()">Errou ❌</button>
   </div>
@@ -105,35 +77,53 @@
 
     function atualizarHistorico() {
       const div = document.getElementById("historicoPrevisoes");
-      div.innerText = historicoPrevisoes.slice().reverse().map(e => `${e.horario} ${e.resultado}`).join("\\n");
+      div.innerText = historicoPrevisoes.slice().reverse().map(e => `${e.horario} ${e.resultado}`).join("\n");
     }
 
     function analisarHistorico() {
-      alert("Histórico analisado com sucesso 🧠");
-      // Aqui será expandida a lógica de aprendizado automático baseado em padrões complexos
+      const texto = document.getElementById("historico").value;
+      const linhas = texto.trim().split("\n");
+      const horariosBrancos = [];
+      for (let i = 0; i < linhas.length; i++) {
+        const linha = linhas[i].trim();
+        if (linha === "" && linhas[i + 1]) {
+          const horario = linhas[i + 1].trim();
+          if (/\\d{2}:\\d{2}:\\d{2}/.test(horario)) {
+            horariosBrancos.push(horario);
+          }
+        }
+      }
+      let previsao = "";
+      if (horariosBrancos.length >= 2) {
+        const ultimos = horariosBrancos.slice(-3).map(h => {
+          const [h1, m1, s1] = h.split(":").map(Number);
+          return h1 * 3600 + m1 * 60 + s1;
+        });
+        const medias = [];
+        for (let i = 1; i < ultimos.length; i++) {
+          medias.push(ultimos[i] - ultimos[i - 1]);
+        }
+        const media = Math.round(medias.reduce((a, b) => a + b, 0) / medias.length);
+        const ult = ultimos[ultimos.length - 1];
+        const previsoes = [];
+        for (let i = 1; i <= 3; i++) {
+          let seg = ult + i * media;
+          let h = Math.floor(seg / 3600) % 24;
+          let m = Math.floor((seg % 3600) / 60);
+          let s = seg % 60;
+          const sinal = (i === 1 ? "Forte" : i === 2 ? "Moderado" : "Arriscado");
+          previsoes.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} — ${sinal}`);
+        }
+        previsao = previsoes.join("\n");
+      } else {
+        previsao = "Poucos dados para previsão automática.";
+      }
+      document.getElementById("previsao").innerText = previsao;
       salvarDados();
     }
 
     function limparHistorico() {
       document.getElementById("historico").value = "";
-    }
-
-    function analisarSinalManual() {
-      const anterior = document.getElementById("anterior").value;
-      const branco = document.getElementById("branco").value;
-      const posterior = document.getElementById("posterior").value;
-      const horarioBranco = branco.trim().split(" ")[0];
-
-      const estrategia = {
-        anterior, branco, posterior,
-        horario: horarioBranco,
-        tipo: "manual",
-        peso: 1
-      };
-      estrategias.push(estrategia);
-
-      document.getElementById("previsao").innerHTML = `🧠 Estratégia registrada para horário provável: <b>${horarioBranco}</b>`;
-      salvarDados();
     }
 
     function registrarAcerto() {
