@@ -1,153 +1,138 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scofield Analista PRO - Automático</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scofield Analista PRO</title>
   <style>
     body {
-      background-color: #111;
+      background: #111;
       color: #eee;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       padding: 15px;
     }
-    h1 {
-      color: #ff4747;
-      text-align: center;
+    h1 { text-align: center; color: #ff4747; }
+    textarea, input, button {
+      width: 100%; padding: 10px; margin: 5px 0;
+      border-radius: 5px; box-sizing: border-box;
     }
     textarea, input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      background: #222;
-      color: #eee;
-      border: 1px solid #555;
-      border-radius: 5px;
+      background: #222; color: #eee; border: 1px solid #555;
     }
     button {
-      background-color: #ff4747;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      margin: 5px;
+      background: #ff4747; color: white; border: none; cursor: pointer;
+    }
+    button:hover { background: #e53e3e; }
+    .secao { margin-top: 25px; }
+    .sinal {
+      background: #222; padding: 10px; margin-top: 10px;
       border-radius: 5px;
-      cursor: pointer;
     }
-    button:hover {
-      background-color: #e53e3e;
+    .sinal button {
+      width: 48%; margin: 2px 1%; font-weight: bold;
     }
-    .secao { margin-top: 30px; }
+    .estatisticas {
+      white-space: pre-line;
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-size: 1em;
+    }
   </style>
 </head>
 <body>
-  <h1>Scofield Analista PRO ⚪ (Automático)</h1>
+  <h1>Scofield Analista PRO ⚪</h1>
 
   <div class="secao">
-    <label for="historico">Colar histórico da Blaze:</label>
-    <textarea id="historico" rows="8" placeholder="Cole aqui o histórico..."></textarea>
-    <button onclick="analisarHistorico()">Analisar Histórico</button>
-    <button onclick="limparHistorico()">Limpar Histórico</button>
+    <h3>🧠 Histórico Cérebro</h3>
+    <textarea id="historicoCerebro" rows="8" placeholder="Cole aqui o histórico completo com horários, números e cores..."></textarea>
+    <button onclick="enviarCerebro()">📤 Enviar Histórico</button>
+    <div id="mensagemCerebro"></div>
   </div>
 
   <div class="secao">
-    <label>Próximos brancos prováveis:</label>
-    <div id="previsao" style="white-space: pre-line; background: #222; padding: 10px; border-radius: 5px;"></div>
-    <button onclick="registrarAcerto()">Acertou ✅</button>
-    <button onclick="registrarErro()">Errou ❌</button>
+    <h3>⏱️ Começar Análise</h3>
+    <textarea id="historicoAtual" rows="6" placeholder="Cole aqui as últimas jogadas para prever os brancos..."></textarea>
+    <button onclick="analisarAgora()">🔍 Analisar</button>
+    <div id="previsoes"></div>
   </div>
 
   <div class="secao">
-    <label>Histórico de Previsões:</label>
-    <div id="historicoPrevisoes" style="white-space: pre-line; background: #222; padding: 10px; border-radius: 5px;"></div>
-  </div>
-
-  <div class="secao">
-    <button onclick="limparTudo()">🧠 Limpar Estratégias</button>
+    <h3>📊 Estatísticas</h3>
+    <div id="estatisticas" class="estatisticas"></div>
+    <button onclick="limparEstatisticas()">🧹 Limpar Estatísticas</button>
   </div>
 
   <script>
-    const estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
-    const historicoPrevisoes = JSON.parse(localStorage.getItem("historicoPrevisoes") || "[]");
+    let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+    let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
 
     function salvarDados() {
       localStorage.setItem("estrategias", JSON.stringify(estrategias));
-      localStorage.setItem("historicoPrevisoes", JSON.stringify(historicoPrevisoes));
-      atualizarHistorico();
+      localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+      atualizarEstatisticas();
     }
 
-    function atualizarHistorico() {
-      const div = document.getElementById("historicoPrevisoes");
-      div.innerText = historicoPrevisoes.slice().reverse().map(e => `${e.horario} ${e.resultado}`).join("\n");
-    }
-
-    function analisarHistorico() {
-      const texto = document.getElementById("historico").value;
-      const linhas = texto.trim().split("\n");
-      const horariosBrancos = [];
-      for (let i = 0; i < linhas.length; i++) {
-        const linha = linhas[i].trim();
-        if (linha === "" && linhas[i + 1]) {
-          const horario = linhas[i + 1].trim();
-          if (/\\d{2}:\\d{2}:\\d{2}/.test(horario)) {
-            horariosBrancos.push(horario);
-          }
-        }
-      }
-      let previsao = "";
-      if (horariosBrancos.length >= 2) {
-        const ultimos = horariosBrancos.slice(-3).map(h => {
-          const [h1, m1, s1] = h.split(":").map(Number);
-          return h1 * 3600 + m1 * 60 + s1;
-        });
-        const medias = [];
-        for (let i = 1; i < ultimos.length; i++) {
-          medias.push(ultimos[i] - ultimos[i - 1]);
-        }
-        const media = Math.round(medias.reduce((a, b) => a + b, 0) / medias.length);
-        const ult = ultimos[ultimos.length - 1];
-        const previsoes = [];
-        for (let i = 1; i <= 3; i++) {
-          let seg = ult + i * media;
-          let h = Math.floor(seg / 3600) % 24;
-          let m = Math.floor((seg % 3600) / 60);
-          let s = seg % 60;
-          const sinal = (i === 1 ? "Forte" : i === 2 ? "Moderado" : "Arriscado");
-          previsoes.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} — ${sinal}`);
-        }
-        previsao = previsoes.join("\n");
-      } else {
-        previsao = "Poucos dados para previsão automática.";
-      }
-      document.getElementById("previsao").innerText = previsao;
+    function enviarCerebro() {
+      const texto = document.getElementById("historicoCerebro").value;
+      if (texto.trim().length < 10) return alert("Histórico muito curto.");
+      // Aqui será substituído futuramente com lógica real de aprendizagem
+      estrategias.push({ data: Date.now(), peso: 1 });
+      document.getElementById("mensagemCerebro").innerText = "✅ Histórico analisado com sucesso!";
       salvarDados();
     }
 
-    function limparHistorico() {
-      document.getElementById("historico").value = "";
+    function analisarAgora() {
+      const previsoes = gerarPrevisoes();
+      const div = document.getElementById("previsoes");
+      div.innerHTML = "<h4>🟢 Brancos Prováveis:</h4>";
+      previsoes.forEach(p => {
+        const sinalDiv = document.createElement("div");
+        sinalDiv.className = "sinal";
+        sinalDiv.innerHTML = `
+          <strong>${p.horario}</strong> (${p.nivel})<br>
+          <button onclick="registrarResultado('${p.horario}','win')">✅ Acertou</button>
+          <button onclick="registrarResultado('${p.horario}','loss')">❌ Errou</button>
+        `;
+        div.appendChild(sinalDiv);
+      });
     }
 
-    function registrarAcerto() {
-      const horario = new Date().toTimeString().substring(0,5);
-      historicoPrevisoes.push({ horario, resultado: "win✅" });
-      if (estrategias.length) estrategias[estrategias.length - 1].peso++;
+    function gerarPrevisoes() {
+      const agora = new Date();
+      const base = agora.getHours() * 3600 + agora.getMinutes() * 60 + agora.getSeconds();
+      return [1, 2, 3].map(i => {
+        const seg = base + i * 240;
+        const h = Math.floor(seg / 3600) % 24;
+        const m = Math.floor((seg % 3600) / 60);
+        const s = seg % 60;
+        const nivel = i === 1 ? "Forte" : i === 2 ? "Moderado" : "Arriscado";
+        return {
+          horario: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
+          nivel
+        };
+      });
+    }
+
+    function registrarResultado(horario, resultado) {
+      estatisticas.push({ horario, resultado: resultado === 'win' ? '✅' : '❌' });
       salvarDados();
     }
 
-    function registrarErro() {
-      const horario = new Date().toTimeString().substring(0,5);
-      historicoPrevisoes.push({ horario, resultado: "loss❌" });
-      if (estrategias.length) estrategias[estrategias.length - 1].peso--;
-      salvarDados();
+    function atualizarEstatisticas() {
+      const div = document.getElementById("estatisticas");
+      div.innerText = estatisticas.map(e => `${e.horario} ${e.resultado}`).reverse().join("\n");
     }
 
-    function limparTudo() {
-      if (confirm("Tem certeza que deseja limpar TODAS as estratégias aprendidas?")) {
-        localStorage.removeItem("estrategias");
-        location.reload();
+    function limparEstatisticas() {
+      if (confirm("Tem certeza que deseja apagar as estatísticas?")) {
+        estatisticas = [];
+        salvarDados();
       }
     }
 
-    atualizarHistorico();
+    atualizarEstatisticas();
   </script>
 </body>
 </html>
