@@ -118,3 +118,92 @@
   </div>
 
   <script>
+// Cores
+const VERMELHAS = new Set(['1','2','3','4','5','6','7']);
+const PRETAS = new Set(['8','9','10','11','12','13','14']);
+
+// Dados persistentes
+let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
+let historicosMemorizados = JSON.parse(localStorage.getItem("historicosMemorizados") || "[]");
+
+// Atualiza contagem de estratégias
+function atualizarContadorEstrategias() {
+  document.getElementById("numEstrategias").innerText = estrategias.length;
+}
+
+// Atualiza estatísticas
+function atualizarEstatisticas() {
+  const div = document.getElementById("estatisticas");
+  if (estatisticas.length === 0) {
+    div.innerText = "Nenhuma estatística registrada.";
+    return;
+  }
+  let linhas = estatisticas.map(e => {
+    let status = e.acerto ? "✅" : "❌";
+    let d = new Date(e.data);
+    return `${e.horario} ${status} - ${d.toLocaleString()}`;
+  });
+  div.innerText = linhas.join('\n');
+}
+
+// Salva no localStorage
+function salvarDados() {
+  localStorage.setItem("estrategias", JSON.stringify(estrategias));
+  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+  localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
+  atualizarEstatisticas();
+  atualizarContadorEstrategias();
+}
+
+// Parseia histórico para [{num, hora, cor}]
+function parsearHistorico(texto) {
+  let linhas = texto.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+  let resultado = [];
+  for (let i = 0; i < linhas.length;) {
+    let num = linhas[i];
+    let proxLinha = linhas[i + 1] || '';
+    if (/^\d{2}:\d{2}:\d{2}$/.test(proxLinha)) {
+      let cor = 'branco';
+      if (num === '0' || num === '') {
+        cor = 'branco';
+        num = null;
+      } else if (VERMELHAS.has(num)) {
+        cor = 'vermelha';
+      } else if (PRETAS.has(num)) {
+        cor = 'preta';
+      } else {
+        cor = 'desconhecida';
+      }
+      resultado.push({ num: num, hora: proxLinha, cor: cor });
+      i += 2;
+    } else {
+      i++;
+    }
+  }
+  return resultado;
+}
+
+// Cria nova estratégia a partir de histórico parseado
+function criarOuAtualizarEstrategias(historico) {
+  let horariosBranco = historico.filter(e => e.cor === 'branco').map(e => e.hora);
+  if (horariosBranco.length === 0) return 0;
+
+  let nova = {
+    id: Date.now(),
+    horariosBrancos: horariosBranco,
+    criadoEm: Date.now(),
+    peso: 1
+  };
+
+  let existe = estrategias.some(est => {
+    return JSON.stringify(est.horariosBrancos) === JSON.stringify(nova.horariosBrancos);
+  });
+
+  if (!existe) {
+    estrategias.push(nova);
+    return 1;
+  }
+
+  return 0;
+}
