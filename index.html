@@ -384,3 +384,20 @@ function limparEstatisticas() {
     atualizarEstatisticas();
   }
 }
+// Atualiza contagem de estratégias e estatísticas ao iniciar
+function iniciarScofield() {
+  atualizarEstatisticas();
+  atualizarContadorEstrategias();
+}
+
+// Salva todos os dados no localStorage
+function salvarDados() {
+  localStorage.setItem("estrategias", JSON.stringify(estrategias));
+  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+  localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
+}
+
+// Ao carregar a página, inicializar sistema
+window.onload = function () {
+  iniciarScofield();
+};
