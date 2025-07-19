@@ -116,6 +116,8 @@
     <button onclick="limparHistorico()">🧼 Limpar Campos de Histórico</button>
     <div id="mensagemHistorico" style="margin-top:10px;color:#8f8;"></div>
   </div>
+
+<script>
 // Cores por faixa numérica
 const VERMELHAS = new Set(['1','2','3','4','5','6','7']);
 const PRETAS = new Set(['8','9','10','11','12','13','14']);
@@ -384,20 +386,57 @@ function limparEstatisticas() {
     atualizarEstatisticas();
   }
 }
+// Limpar históricos e campos de texto
+function limparHistorico() {
+  if (confirm("Deseja limpar os campos de histórico?")) {
+    document.getElementById("historicoCerebro").value = "";
+    document.getElementById("historicoAtual").value = "";
+    document.getElementById("mensagemCerebro").innerText = "";
+    document.getElementById("mensagemHistorico").innerText = "Campos limpos.";
+    document.getElementById("previsoes").innerHTML = "";
+    document.getElementById("minutosQuentes").innerHTML = "";
+    document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+    document.getElementById("avisoRecChuva").innerText = "";
+  }
+}
+
+// Mostra minutos quentes com base em estratégias (mais frequentes)
+function mostrarMinutosQuentes() {
+  if (estrategias.length === 0) {
+    alert("Nenhuma estratégia para analisar minutos quentes.");
+    return;
+  }
+
+  // Contar frequências de minutos
+  let frequenciaMinutos = {};
+  estrategias.forEach(est => {
+    if (!frequenciaMinutos[est.minuto]) frequenciaMinutos[est.minuto] = 0;
+    frequenciaMinutos[est.minuto] += est.peso;
+  });
+
+  // Ordenar por frequência desc
+  let minutosOrdenados = Object.entries(frequenciaMinutos)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 10); // top 10
+
+  let container = document.getElementById("minutosQuentes");
+  container.innerHTML = "<b>Minutos mais frequentes:</b><br>";
+  minutosOrdenados.forEach(([minuto, peso]) => {
+    container.innerHTML += `Minuto ${minuto} - Peso: ${peso}<br>`;
+  });
+}
+
 // Atualiza contagem de estratégias e estatísticas ao iniciar
 function iniciarScofield() {
   atualizarEstatisticas();
   atualizarContadorEstrategias();
 }
 
-// Salva todos os dados no localStorage
-function salvarDados() {
-  localStorage.setItem("estrategias", JSON.stringify(estrategias));
-  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
-  localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
-}
-
 // Ao carregar a página, inicializar sistema
 window.onload = function () {
   iniciarScofield();
 };
+</script>
+
+</body>
+</html>
