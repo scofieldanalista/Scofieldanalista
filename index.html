@@ -117,326 +117,309 @@
     <div id="mensagemHistorico" style="margin-top:10px;color:#8f8;"></div>
   </div>
 
-<script>
-// Cores por faixa numérica
-const VERMELHAS = new Set(['1','2','3','4','5','6','7']);
-const PRETAS = new Set(['8','9','10','11','12','13','14']);
+  <script>
+    // Cores por faixa numérica
+    const VERMELHAS = new Set(['1','2','3','4','5','6','7']);
+    const PRETAS = new Set(['8','9','10','11','12','13','14']);
 
-// Memória local
-let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
-let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
-let historicosMemorizados = JSON.parse(localStorage.getItem("historicosMemorizados") || "[]");
+    // Memória local
+    let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+    let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
+    let historicosMemorizados = JSON.parse(localStorage.getItem("historicosMemorizados") || "[]");
 
-// Atualiza contador de estratégias
-function atualizarContadorEstrategias() {
-  document.getElementById("numEstrategias").innerText = estrategias.length;
-}
+    // Atualiza contador de estratégias
+    function atualizarContadorEstrategias() {
+      document.getElementById("numEstrategias").innerText = estrategias.length;
+    }
 
-// Atualiza estatísticas na tela
-function atualizarEstatisticas() {
-  const div = document.getElementById("estatisticas");
-  if (estatisticas.length === 0) {
-    div.innerText = "Nenhuma estatística registrada.";
-    return;
-  }
-  let linhas = estatisticas.map(e => {
-    let status = e.acerto ? "✅" : "❌";
-    let d = new Date(e.data);
-    return `${e.horario} ${status} - ${d.toLocaleString()}`;
-  });
-  div.innerText = linhas.join('\n');
-}
+    // Atualiza estatísticas na tela
+    function atualizarEstatisticas() {
+      const div = document.getElementById("estatisticas");
+      if (estatisticas.length === 0) {
+        div.innerText = "Nenhuma estatística registrada.";
+        return;
+      }
+      let linhas = estatisticas.map(e => {
+        let status = e.acerto ? "✅" : "❌";
+        let d = new Date(e.data);
+        return `${e.horario} ${status} - ${d.toLocaleString()}`;
+      });
+      div.innerText = linhas.join('\n');
+    }
 
-// Salvar memória local
-function salvarDados() {
-  localStorage.setItem("estrategias", JSON.stringify(estrategias));
-  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
-  localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
-  atualizarEstatisticas();
-  atualizarContadorEstrategias();
-}
+    // Salvar memória local
+    function salvarDados() {
+      localStorage.setItem("estrategias", JSON.stringify(estrategias));
+      localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+      localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
+      atualizarEstatisticas();
+      atualizarContadorEstrategias();
+    }
 
-// 📌 Parseia o histórico colado (cérebro e análise)
-function parsearHistorico(texto) {
-  let linhas = texto.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
-  let resultado = [];
-  for (let i = 0; i < linhas.length;) {
-    let num = linhas[i];
-    let hora = linhas[i + 1] || '';
+    // 📌 Parseia o histórico colado (cérebro e análise)
+    function parsearHistorico(texto) {
+      let linhas = texto.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+      let resultado = [];
+      for (let i = 0; i < linhas.length;) {
+        let num = linhas[i];
+        let hora = linhas[i + 1] || '';
 
-    if (/^\d{2}:\d{2}:\d{2}$/.test(hora)) {
-      let cor = 'branco';
-      if (num === '0' || num === '') {
-        cor = 'branco';
-        num = null;
-      } else if (VERMELHAS.has(num)) {
-        cor = 'vermelha';
-      } else if (PRETAS.has(num)) {
-        cor = 'preta';
-      } else {
-        cor = 'desconhecida';
+        if (/^\d{2}:\d{2}:\d{2}$/.test(hora)) {
+          let cor = 'branco';
+          if (num === '0' || num === '') {
+            cor = 'branco';
+            num = null;
+          } else if (VERMELHAS.has(num)) {
+            cor = 'vermelha';
+          } else if (PRETAS.has(num)) {
+            cor = 'preta';
+          } else {
+            cor = 'desconhecida';
+          }
+
+          resultado.push({ num: num, hora: hora, cor: cor });
+          i += 2;
+        } else {
+          i++;
+        }
+      }
+      return resultado;
+    }
+    // Cria estratégias reais baseadas nos brancos do histórico
+    function criarOuAtualizarEstrategias(historico) {
+      let brancos = historico.filter(e => e.cor === 'branco');
+
+      if (brancos.length === 0) return 0;
+
+      let novas = 0;
+
+      brancos.forEach((branco, index) => {
+        // Verifica se há anterior e posterior
+        const anterior = historico[index - 1];
+        const posterior = historico[index + 1];
+
+        if (!anterior || !posterior || !anterior.num || !posterior.num) return;
+
+        const soma = parseInt(anterior.num) + parseInt(posterior.num);
+        const minuto = branco.hora.slice(3, 5);
+
+        const padrao = {
+          anterior: anterior.num,
+          posterior: posterior.num,
+          soma: soma,
+          minuto: minuto,
+          horaCompleta: branco.hora
+        };
+
+        const jaExiste = estrategias.some(est => {
+          return (
+            est.soma === padrao.soma &&
+            est.minuto === padrao.minuto &&
+            est.anterior === padrao.anterior &&
+            est.posterior === padrao.posterior
+          );
+        });
+
+        if (!jaExiste) {
+          estrategias.push({
+            ...padrao,
+            peso: 1,
+            aprendidoEm: Date.now()
+          });
+          novas++;
+        }
+      });
+
+      return novas;
+    }
+
+    // Função chamada ao clicar em "📤 Enviar Histórico"
+    function enviarCerebro() {
+      const texto = document.getElementById("historicoCerebro").value;
+      if (texto.trim().length < 10) {
+        alert("Histórico muito curto.");
+        return;
       }
 
-      resultado.push({ num: num, hora: hora, cor: cor });
-      i += 2;
-    } else {
-      i++;
-    }
-  }
-  return resultado;
-}
-// Cria estratégias reais baseadas nos brancos do histórico
-function criarOuAtualizarEstrategias(historico) {
-  let brancos = historico.filter(e => e.cor === 'branco');
+      const parseado = parsearHistorico(texto);
+      if (parseado.length === 0) {
+        alert("Não foi possível interpretar o histórico.");
+        return;
+      }
 
-  if (brancos.length === 0) return 0;
-
-  let novas = 0;
-
-  brancos.forEach((branco, index) => {
-    // Verifica se há anterior e posterior
-    const anterior = historico[index - 1];
-    const posterior = historico[index + 1];
-
-    if (!anterior || !posterior || !anterior.num || !posterior.num) return;
-
-    const soma = parseInt(anterior.num) + parseInt(posterior.num);
-    const minuto = branco.hora.slice(3, 5);
-
-    const padrao = {
-      anterior: anterior.num,
-      posterior: posterior.num,
-      soma: soma,
-      minuto: minuto,
-      horaCompleta: branco.hora
-    };
-
-    const jaExiste = estrategias.some(est => {
-      return (
-        est.soma === padrao.soma &&
-        est.minuto === padrao.minuto &&
-        est.anterior === padrao.anterior &&
-        est.posterior === padrao.posterior
-      );
-    });
-
-    if (!jaExiste) {
-      estrategias.push({
-        ...padrao,
-        peso: 1,
-        aprendidoEm: Date.now()
+      historicosMemorizados.push({
+        data: Date.now(),
+        itens: parseado
       });
-      novas++;
+
+      const novas = criarOuAtualizarEstrategias(parseado);
+      document.getElementById("mensagemCerebro").innerText =
+        `✅ Histórico enviado! ${novas} estratégia(s) criada(s).`;
+
+      salvarDados();
     }
-  });
+    // Função chamada ao clicar no botão 🔍 Analisar
+    function analisarAgora() {
+      const textoAtual = document.getElementById("historicoAtual").value;
 
-  return novas;
-}
+      if (textoAtual.trim().length < 5) {
+        alert("Cole as últimas jogadas para analisar.");
+        return;
+      }
 
-// Função chamada ao clicar em "📤 Enviar Histórico"
-function enviarCerebro() {
-  const texto = document.getElementById("historicoCerebro").value;
-  if (texto.trim().length < 10) {
-    alert("Histórico muito curto.");
-    return;
-  }
+      const analisado = parsearHistorico(textoAtual);
+      if (analisado.length === 0) {
+        alert("Não foi possível interpretar o histórico atual.");
+        return;
+      }
 
-  const parseado = parsearHistorico(texto);
-  if (parseado.length === 0) {
-    alert("Não foi possível interpretar o histórico.");
-    return;
-  }
+      const ultimos = analisado.slice(-3); // Pega as 3 últimas jogadas
+      if (ultimos.length < 3) {
+        alert("Forneça ao menos 3 resultados (anterior, branco, posterior).");
+        return;
+      }
 
-  historicosMemorizados.push({
-    data: Date.now(),
-    itens: parseado
-  });
+      const anterior = ultimos[0];
+      const branco = ultimos[1];
+      const posterior = ultimos[2];
 
-  const novas = criarOuAtualizarEstrategias(parseado);
-  document.getElementById("mensagemCerebro").innerText =
-    `✅ Histórico enviado! ${novas} estratégia(s) criada(s).`;
+      if (!anterior.num || !posterior.num) {
+        alert("Informe números válidos para anterior e posterior.");
+        return;
+      }
 
-  salvarDados();
-}
-// Função chamada ao clicar no botão 🔍 Analisar
-function analisarAgora() {
-  const textoAtual = document.getElementById("historicoAtual").value;
+      const soma = parseInt(anterior.num) + parseInt(posterior.num);
+      const minutoAtual = branco.hora.slice(3, 5);
 
-  if (textoAtual.trim().length < 5) {
-    alert("Cole as últimas jogadas para analisar.");
-    return;
-  }
+      const correspondentes = estrategias.filter(est => {
+        return (
+          est.soma === soma &&
+          est.anterior === anterior.num &&
+          est.posterior === posterior.num
+        );
+      });
 
-  const analisado = parsearHistorico(textoAtual);
-  if (analisado.length === 0) {
-    alert("Não foi possível interpretar o histórico atual.");
-    return;
-  }
+      const horariosPrevisao = correspondentes.map(est => est.horaCompleta);
 
-  const ultimos = analisado.slice(-3); // Pega as 3 últimas jogadas
-  if (ultimos.length < 3) {
-    alert("Forneça ao menos 3 resultados (anterior, branco, posterior).");
-    return;
-  }
+      let aviso = "";
+      if (correspondentes.length === 0) {
+        aviso = "⚠️ Nenhum padrão semelhante encontrado. Possível REC.";
+      } else if (correspondentes.length >= 3) {
+        aviso = "🌧️ CHUVA de padrões semelhante detectada!";
+      }
 
-  const anterior = ultimos[0];
-  const branco = ultimos[1];
-  const posterior = ultimos[2];
-
-  if (!anterior.num || !posterior.num) {
-    alert("Informe números válidos para anterior e posterior.");
-    return;
-  }
-
-  const soma = parseInt(anterior.num) + parseInt(posterior.num);
-  const minutoAtual = branco.hora.slice(3, 5);
-
-  const correspondentes = estrategias.filter(est => {
-    return (
-      est.soma === soma &&
-      est.anterior === anterior.num &&
-      est.posterior === posterior.num
-    );
-  });
-
-  const horariosPrevisao = correspondentes.map(est => est.horaCompleta);
-
-  let aviso = "";
-  if (correspondentes.length === 0) {
-    aviso = "⚠️ Nenhum padrão semelhante encontrado. Possível REC.";
-  } else if (correspondentes.length >= 3) {
-    aviso = "🌧️ CHUVA de padrões semelhante detectada!";
-  }
-
-  mostrarPrevisoesInteligentes(horariosPrevisao, aviso);
-}
-
-// Mostra os horários previstos baseados em estratégias salvas
-function mostrarPrevisoesInteligentes(horarios, aviso = "") {
-  const div = document.getElementById("previsoes");
-  div.innerHTML = "<h4>🟢 Brancos Prováveis:</h4>";
-
-  if (horarios.length === 0) {
-    div.innerHTML += "<div>Nenhum horário previsto com base nos padrões.</div>";
-    document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
-    document.getElementById("avisoRecChuva").innerText = aviso;
-    return;
-  }
-
-  horarios.sort();
-  horarios.forEach(h => {
-    let linha = document.createElement("div");
-    linha.innerHTML = `
-      ${h} (Forte)
-      <button onclick="registrarAcerto('${h}')">✅ Acertou</button>
-      <button onclick="registrarErro('${h}')">❌ Errou</button>
-    `;
-    div.appendChild(linha);
-  });
-
-  // Mostra no topo
-  document.getElementById("proximaPrevisao").innerText = `Próxima previsão forte: ${horarios[0]}`;
-  document.getElementById("avisoRecChuva").innerText = aviso;
-}
-// Estatísticas salvas (já inicializadas no topo)
-function registrarAcerto(horario) {
-  estatisticas.push({ horario: horario, acerto: true, data: Date.now() });
-  ajustarPesoEstrategia(horario, true);
-  salvarDados();
-  atualizarEstatisticas();
-}
-
-function registrarErro(horario) {
-  estatisticas.push({ horario: horario, acerto: false, data: Date.now() });
-  ajustarPesoEstrategia(horario, false);
-  salvarDados();
-  atualizarEstatisticas();
-}
-
-// Ajusta peso das estratégias com base no feedback
-function ajustarPesoEstrategia(horario, acertou) {
-  estrategias.forEach(est => {
-    if (est.horaCompleta === horario) {
-      est.peso = acertou ? est.peso + 1 : Math.max(1, est.peso - 1);
+      mostrarPrevisoesInteligentes(horariosPrevisao, aviso);
     }
-  });
-}
 
-// Atualiza estatísticas no painel
-function atualizarEstatisticas() {
-  const div = document.getElementById("estatisticas");
-  if (estatisticas.length === 0) {
-    div.innerText = "Nenhuma estatística registrada.";
-    return;
-  }
-  let linhas = estatisticas.map(e => {
-    let status = e.acerto ? "✅" : "❌";
-    let d = new Date(e.data);
-    let dataStr = d.toLocaleString();
-    return `${e.horario} ${status} - ${dataStr}`;
-  });
-  div.innerText = linhas.join('\n');
-}
+    // Mostra os horários previstos baseados em estratégias salvas
+    function mostrarPrevisoesInteligentes(horarios, aviso = "") {
+      const div = document.getElementById("previsoes");
+      div.innerHTML = "<h4>🟢 Brancos Prováveis:</h4>";
 
-// Limpa estatísticas salvas
-function limparEstatisticas() {
-  if (confirm("Deseja apagar todas as estatísticas?")) {
-    estatisticas = [];
-    salvarDados();
-    atualizarEstatisticas();
-  }
-}
-// Limpar históricos e campos de texto
-function limparHistorico() {
-  if (confirm("Deseja limpar os campos de histórico?")) {
-    document.getElementById("historicoCerebro").value = "";
-    document.getElementById("historicoAtual").value = "";
-    document.getElementById("mensagemCerebro").innerText = "";
-    document.getElementById("mensagemHistorico").innerText = "Campos limpos.";
-    document.getElementById("previsoes").innerHTML = "";
-    document.getElementById("minutosQuentes").innerHTML = "";
-    document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
-    document.getElementById("avisoRecChuva").innerText = "";
-  }
-}
+      if (horarios.length === 0) {
+        div.innerHTML += "<div>Nenhum horário previsto com base nos padrões.</div>";
+        document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+        document.getElementById("avisoRecChuva").innerText = aviso;
+        return;
+      }
 
-// Mostra minutos quentes com base em estratégias (mais frequentes)
-function mostrarMinutosQuentes() {
-  if (estrategias.length === 0) {
-    alert("Nenhuma estratégia para analisar minutos quentes.");
-    return;
-  }
+      horarios.sort();
+      horarios.forEach(h => {
+        let linha = document.createElement("div");
+        linha.innerHTML = `
+          ${h} (Forte)
+          <button onclick="registrarAcerto('${h}')">✅ Acertou</button>
+          <button onclick="registrarErro('${h}')">❌ Errou</button>
+        `;
+        div.appendChild(linha);
+      });
 
-  // Contar frequências de minutos
-  let frequenciaMinutos = {};
-  estrategias.forEach(est => {
-    if (!frequenciaMinutos[est.minuto]) frequenciaMinutos[est.minuto] = 0;
-    frequenciaMinutos[est.minuto] += est.peso;
-  });
+      // Mostra no topo
+      document.getElementById("proximaPrevisao").innerText = `Próxima previsão forte: ${horarios[0]}`;
+      document.getElementById("avisoRecChuva").innerText = aviso;
+    }
+    // Estatísticas salvas (já inicializadas no topo)
+    function registrarAcerto(horario) {
+      estatisticas.push({ horario: horario, acerto: true, data: Date.now() });
+      ajustarPesoEstrategia(horario, true);
+      salvarDados();
+      atualizarEstatisticas();
+    }
 
-  // Ordenar por frequência desc
-  let minutosOrdenados = Object.entries(frequenciaMinutos)
-    .sort((a,b) => b[1] - a[1])
-    .slice(0, 10); // top 10
+    function registrarErro(horario) {
+      estatisticas.push({ horario: horario, acerto: false, data: Date.now() });
+      ajustarPesoEstrategia(horario, false);
+      salvarDados();
+      atualizarEstatisticas();
+    }
 
-  let container = document.getElementById("minutosQuentes");
-  container.innerHTML = "<b>Minutos mais frequentes:</b><br>";
-  minutosOrdenados.forEach(([minuto, peso]) => {
-    container.innerHTML += `Minuto ${minuto} - Peso: ${peso}<br>`;
-  });
-}
+    // Ajusta peso das estratégias com base no feedback
+    function ajustarPesoEstrategia(horario, acertou) {
+      estrategias.forEach(est => {
+        if (est.horaCompleta === horario) {
+          est.peso = acertou ? est.peso + 1 : Math.max(1, est.peso - 1);
+        }
+      });
+    }
 
-// Atualiza contagem de estratégias e estatísticas ao iniciar
-function iniciarScofield() {
-  atualizarEstatisticas();
-  atualizarContadorEstrategias();
-}
+    // Limpa estatísticas salvas
+    function limparEstatisticas() {
+      if (confirm("Deseja apagar todas as estatísticas?")) {
+        estatisticas = [];
+        salvarDados();
+        atualizarEstatisticas();
+      }
+    }
+    // Limpar históricos e campos de texto
+    function limparHistorico() {
+      if (confirm("Deseja limpar os campos de histórico?")) {
+        document.getElementById("historicoCerebro").value = "";
+        document.getElementById("historicoAtual").value = "";
+        document.getElementById("mensagemCerebro").innerText = "";
+        document.getElementById("mensagemHistorico").innerText = "Campos limpos.";
+        document.getElementById("previsoes").innerHTML = "";
+        document.getElementById("minutosQuentes").innerHTML = "";
+        document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+        document.getElementById("avisoRecChuva").innerText = "";
+      }
+    }
 
-// Ao carregar a página, inicializar sistema
-window.onload = function () {
-  iniciarScofield();
-};
-</script>
+    // Mostra minutos quentes com base em estratégias (mais frequentes)
+    function mostrarMinutosQuentes() {
+      if (estrategias.length === 0) {
+        alert("Nenhuma estratégia para analisar minutos quentes.");
+        return;
+      }
 
+      // Contar frequências de minutos
+      let frequenciaMinutos = {};
+      estrategias.forEach(est => {
+        if (!frequenciaMinutos[est.minuto]) frequenciaMinutos[est.minuto] = 0;
+        frequenciaMinutos[est.minuto] += est.peso;
+      });
+
+      // Ordenar por frequência desc
+      let minutosOrdenados = Object.entries(frequenciaMinutos)
+        .sort((a,b) => b[1] - a[1])
+        .slice(0, 10); // top 10
+
+      let container = document.getElementById("minutosQuentes");
+      container.innerHTML = "<b>Minutos mais frequentes:</b><br>";
+      minutosOrdenados.forEach(([minuto, peso]) => {
+        container.innerHTML += `Minuto ${minuto} - Peso: ${peso}<br>`;
+      });
+    }
+
+    // Atualiza contagem de estratégias e estatísticas ao iniciar
+    function iniciarScofield() {
+      atualizarEstatisticas();
+      atualizarContadorEstrategias();
+    }
+
+    // Ao carregar a página, inicializar sistema
+    window.onload = function () {
+      iniciarScofield();
+    };
+  </script>
 </body>
 </html>
