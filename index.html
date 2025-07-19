@@ -378,3 +378,64 @@ function analisarAgora() {
     document.getElementById("avisoRecChuva").innerText = "";
     document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
   }
+  // Mostrar minutos quentes — combina todos os horários brancos das estratégias, ordenados e sem repetição
+  function mostrarMinutosQuentes(){
+    let todosHorarios = [];
+    estrategias.forEach(est => {
+      todosHorarios = todosHorarios.concat(est.horariosBrancos);
+    });
+    let unicos = [...new Set(todosHorarios)];
+    unicos.sort();
+
+    let div = document.getElementById("minutosQuentes");
+    if(unicos.length === 0){
+      div.innerText = "Nenhum minuto quente aprendido ainda.";
+      return;
+    }
+    div.innerText = unicos.join("\n");
+  }
+
+  // Detecta padrões REC ou CHUVA baseado no histórico atual e estratégia
+  function detectarRecOuChuva(historicoAtual, estrategia){
+    let totalBrancos = historicoAtual.filter(i => i.cor === 'branco').length;
+    let estrategiaQtd = estrategia.horariosBrancos.length;
+
+    let intervalosEstr = [];
+    for(let i=1; i<estrategia.horariosBrancos.length; i++){
+      intervalosEstr.push(diffSegundos(estrategia.horariosBrancos[i-1], estrategia.horariosBrancos[i]));
+    }
+    let mediaIntervaloEstr = intervalosEstr.length > 0 ? (intervalosEstr.reduce((a,b)=>a+b,0)/intervalosEstr.length) : 60;
+
+    let brancosAtual = historicoAtual.filter(i=>i.cor==='branco');
+    let intervalosAtual = [];
+    for(let i=1; i<brancosAtual.length; i++){
+      intervalosAtual.push(diffSegundos(brancosAtual[i-1].hora, brancosAtual[i].hora));
+    }
+    let mediaIntervaloAtual = intervalosAtual.length > 0 ? (intervalosAtual.reduce((a,b)=>a+b,0)/intervalosAtual.length) : 60;
+
+    if(mediaIntervaloAtual > mediaIntervaloEstr * 1.5 && totalBrancos < estrategiaQtd * 0.5){
+      return "⚠️ Padrão REC detectado (baixa frequência de brancos)";
+    }
+
+    if(mediaIntervaloAtual < mediaIntervaloEstr * 0.7 && totalBrancos > estrategiaQtd * 1.5){
+      return "⚠️ Padrão CHUVA detectado (alta frequência de brancos)";
+    }
+
+    return "";
+  }
+
+  // Diferença em segundos entre duas horas "HH:MM:SS"
+  function diffSegundos(h1,h2){
+    let p1 = h1.split(':').map(Number);
+    let p2 = h2.split(':').map(Number);
+    let t1 = p1[0]*3600 + p1[1]*60 + p1[2];
+    let t2 = p2[0]*3600 + p2[1]*60 + p2[2];
+    return Math.abs(t2 - t1);
+  }
+
+  // Inicialização
+  atualizarEstatisticas();
+  atualizarContadorEstrategias();
+</script>
+</body>
+</html>
