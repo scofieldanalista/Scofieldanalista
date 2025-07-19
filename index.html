@@ -3,215 +3,414 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scofield Analista V5 PRO ⚪</title>
+  <title>Scofield Analista V4 - IA Aprimorada</title>
   <style>
-    body { background: #111; color: #eee; font-family: 'Segoe UI', sans-serif; padding: 15px; }
-    h1 { text-align: center; color: #ff4747; }
-    textarea, input, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; box-sizing: border-box; }
-    textarea, input { background: #222; color: #eee; border: 1px solid #555; }
-    button { background: #ff4747; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background: #e53e3e; }
-    .secao { margin-top: 25px; }
-    .estatisticas { white-space: pre-line; background: #222; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 1em; }
-    #avisoRecChuva { background: #440000; color: #ff5555; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; margin-bottom: 15px; }
-    #proximaPrevisao { background: #330000; color: #ff4747; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; margin-bottom: 15px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #f2f2f2;
+      padding: 20px;
+      text-align: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #00ffcc;
+      margin-bottom: 10px;
+    }
+    .input-group {
+      margin: 15px auto;
+      max-width: 450px;
+      text-align: left;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      border-radius: 8px;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+      resize: vertical;
+      font-family: monospace;
+      background: #222;
+      color: #eee;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      background: #222;
+      color: #eee;
+      font-family: monospace;
+    }
+    button {
+      cursor: pointer;
+      background: #00ffcc;
+      border: none;
+      padding: 10px 18px;
+      margin: 10px 5px 0 0;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #000;
+      font-size: 15px;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #00bfa5;
+      color: #fff;
+    }
+    .block-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      gap: 15px;
+    }
+    .block {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #111;
+      user-select: none;
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+    .vermelho { background: #e53935; color: #fff; }
+    .preto { background: #212121; color: #fff; }
+    .branco { background: #fff; color: #111; }
+    #resultado {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      min-height: 40px;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 10px;
+      background: #222;
+      border-radius: 8px;
+      color: #00ffcc;
+    }
+    #estrategiasSalvas {
+      max-width: 450px;
+      margin: 20px auto 0 auto;
+      text-align: left;
+      background: #222;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      max-height: 180px;
+      overflow-y: auto;
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
-  <h1>Scofield Analista V5 PRO ⚪</h1>
+  <h1>🔍 Scofield Analista V4</h1>
 
-  <div id="proximaPrevisao">Próxima previsão forte: --:--:--</div>
-  <div id="avisoRecChuva"></div>
-
-  <div class="secao">
-    <h3>🧠 Histórico Cérebro</h3>
-    <textarea id="historicoCerebro" rows="8" placeholder="Cole aqui o histórico completo com horários, números e cores..."></textarea>
-    <button onclick="enviarCerebro()">📤 Enviar Histórico</button>
-    <div id="mensagemCerebro" style="color:#8f8; margin-top:6px;"></div>
-    <div>Estratégias criadas: <span id="numEstrategias">0</span></div>
+  <div class="input-group">
+    <label for="historico"><b>Cole o histórico da Blaze (com horários e números):</b></label>
+    <textarea id="historico" placeholder="Exemplo:\n1\n00:00:05\n...\n(aceita vários formatos)"></textarea>
+    <button onclick="analisarHistorico()">Analisar Histórico</button>
+    <button onclick="limparHistorico()">Limpar Histórico</button>
   </div>
 
-  <div class="secao">
-    <h3>⏱️ Começar Análise</h3>
-    <textarea id="historicoAtual" rows="6" placeholder="Cole aqui as últimas jogadas para prever os brancos..."></textarea>
-    <button onclick="analisarAgora()">🔍 Analisar</button>
-    <div id="previsoes"></div>
-    <button onclick="mostrarMinutosQuentes()">📈 Ver Minutos Quentes</button>
-    <div id="minutosQuentes" class="estatisticas"></div>
+  <h2>Informe um padrão manual</h2>
+  <div class="block-container">
+    <div id="blocoAnterior" class="block branco">?</div>
+    <div class="block branco" style="font-size: 32px;">🎲</div>
+    <div id="blocoPosterior" class="block branco">?</div>
   </div>
 
-  <div class="secao">
-    <h3>📊 Estatísticas</h3>
-    <div id="estatisticas" class="estatisticas">Nenhuma estatística registrada.</div>
-    <button onclick="limparEstatisticas()">🧹 Limpar Estatísticas</button>
+  <div class="input-group">
+    <input id="anterior" type="text" placeholder="Número anterior / horário (HH:MM:SS)" />
+    <input id="posterior" type="text" placeholder="Número posterior / horário (HH:MM:SS)" />
+    <input id="branco" type="text" placeholder="Horário do branco (HH:MM:SS)" />
+    <button onclick="analisarPadrao()">Analisar padrão</button>
   </div>
 
-  <div class="secao">
-    <h3>🧹 Limpar Histórico</h3>
-    <button onclick="limparHistorico()">🧼 Limpar Campos de Histórico</button>
-    <div id="mensagemHistorico" style="color:#8f8; margin-top:10px;"></div>
+  <div>
+    <button onclick="registrarResultado(true)">✅ Acertou</button>
+    <button onclick="registrarResultado(false)">❌ Errou</button>
   </div>
 
-  <script>
-    const VERMELHA = new Set(['1','2','3','4','5','6','7']);
-    const PRETA = new Set(['8','9','10','11','12','13','14']);
-    const horasFiltro = 60 * 60 * 1000; // 1 hora
-    let estrategias = JSON.parse(localStorage.getItem("estrategias")||"[]");
-    let estatisticas = JSON.parse(localStorage.getItem("estatisticas")||"[]");
-    let historicos = JSON.parse(localStorage.getItem("historicos")||"[]");
+  <div id="resultado"></div>
 
-    function salvar() {
-      localStorage.setItem("estrategias", JSON.stringify(estrategias));
-      localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
-      localStorage.setItem("historicos", JSON.stringify(historicos));
-      atualizarContadores();
+  <div id="estrategiasSalvas" style="display:none;">
+    <h3>Estratégias Salvas:</h3>
+    <ul id="listaEstrategias"></ul>
+  </div>
+
+<script>
+  // --- VARIÁVEIS GLOBAIS ---
+  let estrategias = [];
+  let pesoMaximo = 10;
+  let pesoMinimo = 0;
+  let ultimaAnalise = null;
+
+  // --- FUNÇÃO PARA DEFINIR COR DA PEDRA ---
+  function corDaPedra(numero) {
+    if (!numero || isNaN(numero)) return 'branco';
+    numero = parseInt(numero);
+    if (numero >= 1 && numero <= 7) return 'vermelho';
+    if (numero >= 8 && numero <= 14) return 'preto';
+    return 'branco';
+  }
+
+  // Atualiza os blocos de cor conforme números manuais
+  function atualizarBlocos() {
+    const anterior = document.getElementById("anterior").value.split('/')[0];
+    const posterior = document.getElementById("posterior").value.split('/')[0];
+    document.getElementById("blocoAnterior").className = "block " + corDaPedra(anterior);
+    document.getElementById("blocoAnterior").textContent = anterior || "?";
+    document.getElementById("blocoPosterior").className = "block " + corDaPedra(posterior);
+    document.getElementById("blocoPosterior").textContent = posterior || "?";
+  }
+  document.getElementById("anterior").addEventListener("input", atualizarBlocos);
+  document.getElementById("posterior").addEventListener("input", atualizarBlocos);
+
+  // --- FUNÇÃO PARA PARSE DE HORÁRIO EM SEGUNDOS ---
+  function horarioParaSegundos(horario) {
+    if(!horario) return null;
+    const partes = horario.split(":").map(Number);
+    if(partes.length !== 3) return null;
+    return partes[0]*3600 + partes[1]*60 + partes[2];
+  }
+
+  // --- FUNÇÃO PARA ANÁLISE DO HISTÓRICO ---
+  function analisarHistorico() {
+    const texto = document.getElementById("historico").value.trim();
+    if(!texto) {
+      alert("Cole o histórico antes de analisar.");
+      return;
     }
+    const linhas = texto.split('\n');
+    let registros = [];
 
-    function atualizarContadores() {
-      document.getElementById("numEstrategias").innerText = estrategias.length;
-      atualizarEstatisticas();
-    }
+    // Tentar detectar formatos e extrair número e horário
+    for(let i=0; i<linhas.length; i++) {
+      let linha = linhas[i].trim();
+      if(!linha) continue;
 
-    function atualizarEstatisticas() {
-      const div = document.getElementById("estatisticas");
-      if (!estatisticas.length) {
-        div.innerText = "Nenhuma estatística registrada."; return;
+      let numero = null;
+      let horario = null;
+
+      // Caso formato linha número, próxima linha horário
+      if(i+1 < linhas.length && linhas[i+1].match(/\\d{2}:\\d{2}:\\d{2}/)) {
+        numero = linha.match(/\\d+/) ? linha.match(/\\d+/)[0] : null;
+        horario = linhas[i+1].trim();
+        i++; // pular próxima linha que é horário
+      } else if(linha.match(/\\d+\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2}/)) {
+        // Formato 3 colunas
+        let partes = linha.split(/\s+/);
+        numero = partes[1];
+        horario = partes[2];
+      } else if(linha.match(/\\d{2}:\\d{2}:\\d{2}/)) {
+        // Linha só horário - branco
+        horario = linha;
+        numero = null;
+      } else {
+        // Tentar só número
+        numero = linha.match(/\\d+/) ? linha.match(/\\d+/)[0] : null;
+        horario = null;
       }
-      const seq = calcularSequencia();
-      let linhas = estatisticas.map(e=>`${e.horario} ${e.acerto?"✅":"❌"} - ${new Date(e.data).toLocaleString()}`);
-      linhas.push(`\n🔄 Sequência atual: ${seq.acertos} acerto(s), ${seq.erros} erro(s).`);
-      div.innerText = linhas.join('\n');
+      registros.push({
+        numero,
+        horario,
+        cor: corDaPedra(numero),
+        segundos: horarioParaSegundos(horario)
+      });
     }
 
-    function calcularSequencia(){
-      let ac=0, er=0;
-      for(let i=estatisticas.length-1;i>=0;i--){
-        if(estatisticas[i].acerto) { if(er) break; ac++; } else { if(ac) break; er++; }
-      }
-      return {acertos: ac, erros: er};
-    }
+    gerarEstrategias(registros);
+    document.getElementById("resultado").style.color = "#00ffcc";
+    document.getElementById("resultado").textContent = "✅ Histórico analisado com sucesso!";
+    mostrarEstrategias();
+    ultimaAnalise = registros;
+  }
 
-    function parsear(hist){
-      const linhas = hist.trim().split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
-      let res=[], i=0;
-      while(i<linhas.length){
-        let num=linhas[i], hora=linhas[i+1];
-        if(/^\d{2}:\d{2}:\d{2}$/.test(hora)){
-          let cor="branco";
-          if(num==='0'||!num) cor="branco";
-          else if(VERMELHA.has(num)) cor="vermelha";
-          else if(PRETA.has(num)) cor="preta";
-          else cor="desconhecida";
-          res.push({num, hora, cor, t: timeToSec(hora)});
-          i+=2;
-        } else i++;
-      }
-      return res;
-    }
+  // --- FUNÇÃO QUE GERA ESTRATÉGIAS A PARTIR DO HISTÓRICO ---
+  function gerarEstrategias(registros) {
+    // Resetar
+    estrategias = [];
 
-    function timeToSec(h){
-      const [H,M,S]=h.split(':').map(x=>+x);
-      return H*3600+M*60+S;
-    }
+    // Para cada branco detectado, gerar estratégia baseada em soma e intervalo e horário
+    for(let i=1; i < registros.length - 1; i++) {
+      if(registros[i].cor === 'branco' && registros[i].segundos !== null) {
+        let anterior = registros[i-1];
+        let posterior = registros[i+1];
+        if(anterior && posterior && anterior.segundos !== null && posterior.segundos !== null) {
+          let soma = (parseInt(anterior.numero)||0) + (parseInt(posterior.numero)||0);
+          let intervalo = Math.abs(registros[i].segundos - anterior.segundos);
+          let horario = registros[i].segundos;
+          let faixa = faixaHoraria(horario);
 
-    function enviarCerebro(){
-      const hist = document.getElementById("historicoCerebro").value;
-      const arr = parsear(hist);
-      if(arr.length<2){ alert("Histórico inválido."); return; }
-      historicos.push({ts: Date.now(), itens: arr});
-      gerarEstrategias(arr);
-      document.getElementById("mensagemCerebro").innerText=`✅ Histórico enviado! Estratégias: ${estrategias.length}`;
-      salvar();
-    }
-
-    function gerarEstrategias(arr){
-      estrategias = []; // reinicia
-      for(let i=0;i<arr.length-1;i++){
-        if(arr[i].cor==="branco" && arr[i+1].cor==="branco"){
-          const tempo = arr[i+1].t - arr[i].t;
-          const soma = +arr[i-1]?.num + +arr[i+1]?.num || null;
-          if(!soma) continue;
-          estrategias.push({
-            hora0:arr[i].hora, hora1:arr[i+1].hora,
-            soma, dif:tempo,
-            peso:1, criado:Date.now()
-          });
+          // Verificar se já existe estratégia parecida
+          let existente = estrategias.find(e => 
+            e.soma === soma &&
+            Math.abs(e.intervalo - intervalo) <= 5 &&
+            e.faixa === faixa
+          );
+          if(existente) {
+            // Atualizar pesos, acertos, erros
+            existente.peso = Math.min(pesoMaximo, existente.peso + 0.1);
+            existente.contagem++;
+          } else {
+            estrategias.push({
+              soma,
+              intervalo,
+              horario,
+              peso: 3, // peso inicial médio
+              contagem: 1,
+              acertos: 0,
+              erros: 0,
+              faixa
+            });
+          }
         }
       }
     }
+  }
 
-    function analisarAgora(){
-      const hist = document.getElementById("historicoAtual").value;
-      const arr = parsear(hist);
-      if(arr.length<2){ alert("Histórico inválido."); return; }
-      const brancos=arr.filter(x=>x.cor==="branco");
-      if(!brancos.length){ alert("Sem brancos."); return; }
-      const ult=brancos.slice(-1)[0];
-      const contexto = brancos.slice(-2)[0];
-      const somaAt = contexto ? (+contexto.num + +ult.num): null;
-      const agoraSec=ult.t;
-      // filtrar por hora
-      const corte = Date.now() - horasFiltro;
-      const ates=estrategias.filter(e=>e.criado>=corte);
-      const comp = ates.filter(e=>e.soma===somaAt);
-      if(!comp.length){
-        document.getElementById("previsoes").innerText="⚠️ Sem padrão. REC possível.";
-        return;
+  // --- FAIXA HORÁRIA PARA ANALISE ---
+  function faixaHoraria(segundos) {
+    if(segundos === null) return "desconhecido";
+    let h = Math.floor(segundos/3600);
+    if(h < 12) return "manhã";
+    else if(h < 18) return "tarde";
+    else return "noite";
+  }
+
+  // --- FUNÇÃO PARA ANALISAR PADRÃO MANUAL ---
+  function analisarPadrao() {
+    const anteriorRaw = document.getElementById("anterior").value.trim();
+    const posteriorRaw = document.getElementById("posterior").value.trim();
+    const brancoRaw = document.getElementById("branco").value.trim();
+
+    if(!anteriorRaw || !posteriorRaw || !brancoRaw) {
+      alert("Preencha todos os campos corretamente.");
+      return;
+    }
+
+    const anteriorParts = anteriorRaw.split('/');
+    const posteriorParts = posteriorRaw.split('/');
+
+    if(anteriorParts.length !== 2 || posteriorParts.length !== 2) {
+      alert("Preencha número e horário separados por /, ex: 5/00:01:15");
+      return;
+    }
+
+    const numAnterior = parseInt(anteriorParts[0]);
+    const horaAnterior = anteriorParts[1];
+    const numPosterior = parseInt(posteriorParts[0]);
+    const horaPosterior = posteriorParts[1];
+    const horaBranco = brancoRaw;
+
+    if(isNaN(numAnterior) || isNaN(numPosterior)) {
+      alert("Números anteriores e posteriores inválidos.");
+      return;
+    }
+
+    const somaAtual = numAnterior + numPosterior;
+    const intervaloAtual = Math.abs(horarioParaSegundos(horaBranco) - horarioParaSegundos(horaAnterior));
+    const faixaAtual = faixaHoraria(horarioParaSegundos(horaBranco));
+
+    // Buscar estratégias similares
+    let encontradas = estrategias.filter(e => 
+      e.soma === somaAtual &&
+      Math.abs(e.intervalo - intervaloAtual) <= 5 &&
+      e.faixa === faixaAtual
+    );
+
+    if(encontradas.length === 0) {
+      document.getElementById("resultado").style.color = "#ffbb33";
+      document.getElementById("resultado").textContent = "⚠️ Nenhum padrão exato encontrado. Aguardar novo histórico.";
+      ultimaAnalise = null;
+      return;
+    }
+
+    // Calcular peso médio e mostrar resultado
+    let pesoTotal = 0;
+    encontradas.forEach(e => pesoTotal += e.peso);
+    let pesoMedio = pesoTotal / encontradas.length;
+
+    let texto = `📌 Padrão identificado! Peso médio: ${pesoMedio.toFixed(2)}. `;
+
+    if(pesoMedio >= 4) texto += "💪 Sinal forte para branco!";
+    else if(pesoMedio >= 2) texto += "⚠️ Sinal médio, aposte com cautela.";
+    else texto += "❗ Sinal arriscado, prefira aguardar.";
+
+    document.getElementById("resultado").style.color = pesoMedio >= 4 ? "#00ff00" : pesoMedio >= 2 ? "#ffbb33" : "#ff4444";
+    document.getElementById("resultado").textContent = texto;
+    ultimaAnalise = encontradas;
+  }
+
+  // --- FUNÇÃO PARA REGISTRAR FEEDBACK ACERTO/ERRO ---
+  function registrarResultado(acertou) {
+    if(!ultimaAnalise || ultimaAnalise.length === 0) {
+      alert("Não há análise atual para registrar resultado.");
+      return;
+    }
+
+    ultimaAnalise.forEach(e => {
+      if(acertou) {
+        e.acertos++;
+        e.peso = Math.min(pesoMaximo, e.peso + 0.5);
+      } else {
+        e.erros++;
+        e.peso = Math.max(pesoMinimo, e.peso - 0.7);
       }
-      // escolher maior peso
-      comp.sort((a,b)=>b.peso-a.peso);
-      const top=comp[0];
-      const prox = agoraSec + top.dif;
-      const hh = String(Math.floor(prox/3600)%24).padStart(2,'0');
-      const mm = String(Math.floor(prox/60)%60).padStart(2,'0');
-      const ss = String(prox%60).padStart(2,'0');
-      document.getElementById("previsoes").innerHTML=`<div>${hh}:${mm}:${ss} (⚪ Forte)</div>`;
-      document.getElementById("proximaPrevisao").innerText=`Próxima previsão forte: ${hh}:${mm}:${ss}`;
+    });
+
+    mostrarEstrategias();
+
+    alert(acertou ? "✅ Resultado registrado como ACERTO!" : "❌ Resultado registrado como ERRO.");
+  }
+
+  // --- FUNÇÃO PARA LIMPAR HISTÓRICO ---
+  function limparHistorico() {
+    if(confirm("Deseja realmente limpar todo o histórico e estratégias salvas?")) {
+      document.getElementById("historico").value = "";
+      document.getElementById("resultado").textContent = "";
+      estrategias = [];
+      ultimaAnalise = null;
+      document.getElementById("estrategiasSalvas").style.display = "none";
+      document.getElementById("listaEstrategias").innerHTML = "";
+      document.getElementById("blocoAnterior").className = "block branco";
+      document.getElementById("blocoAnterior").textContent = "?";
+      document.getElementById("blocoPosterior").className = "block branco";
+      document.getElementById("blocoPosterior").textContent = "?";
+    }
+  }
+
+  // --- FUNÇÃO PARA EXIBIR ESTRATÉGIAS SALVAS ---
+  function mostrarEstrategias() {
+    if(estrategias.length === 0) {
+      document.getElementById("estrategiasSalvas").style.display = "none";
+      document.getElementById("listaEstrategias").innerHTML = "";
+      return;
     }
 
-    function mostrarMinutosQuentes(){
-      const freq={};
-      estrategias.forEach(e=>{
-        const min=e.hora1.slice(3,5);
-        freq[min]=(freq[min]||0)+e.peso;
-      });
-      const ord=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
-      const div=document.getElementById("minutosQuentes");
-      div.innerHTML=ord.map(o=>`Minuto ${o[0]} - Peso ${o[1]}`).join('<br>');
-    }
+    document.getElementById("estrategiasSalvas").style.display = "block";
 
-    function registrarAcerto(h){
-      estatisticas.push({horario:h, acerto:true, data:Date.now()});
-      estrategias.forEach(e=>{ if(e.hora1===h) e.peso++; });
-      salvar();
-    }
+    let html = estrategias
+      .sort((a,b) => b.peso - a.peso)
+      .map(e => {
+        let eficiencia = e.acertos + e.erros > 0 ? Math.round(100 * e.acertos / (e.acertos + e.erros)) : 0;
+        return `<li>
+          Soma: <b>${e.soma}</b>, Intervalo: <b>${e.intervalo}s</b>, Faixa: <b>${e.faixa}</b>, Peso: <b>${e.peso.toFixed(2)}</b><br>
+          Acertos: ${e.acertos} | Erros: ${e.erros} | Eficiência: ${eficiencia}%
+        </li>`;
+      }).join("");
 
-    function registrarErro(h){
-      estatisticas.push({horario:h, acerto:false, data:Date.now()});
-      estrategias.forEach(e=>{ if(e.hora1===h) e.peso=Math.max(1, e.peso-1); });
-      salvar();
-    }
-
-    function limparEstatisticas(){
-      if(confirm("Apagar estatísticas?")){
-        estatisticas=[]; salvar(); atualizarEstatisticas();
-      }
-    }
-
-    function limparHistorico(){
-      if(confirm("Limpar tudo?")){
-        document.getElementById("historicoCerebro").value="";
-        document.getElementById("historicoAtual").value="";
-        document.getElementById("mensagemCerebro").innerText="";
-        document.getElementById("mensagemHistorico").innerText="Campos limpos.";
-        document.getElementById("previsoes").innerText="";
-        document.getElementById("minutosQuentes").innerText="";
-        document.getElementById("proximaPrevisao").innerText="Próxima previsão forte: --:--:--";
-      }
-    }
-
-    window.onload = () => { atualizarContadores(); };
-
-  </script>
+    document.getElementById("listaEstrategias").innerHTML = html;
+  }
+</script>
 </body>
 </html>
