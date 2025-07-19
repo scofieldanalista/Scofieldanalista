@@ -87,3 +87,31 @@
 
 <div id="proximaPrevisao">Próxima previsão forte: --:--:--</div>
 <div id="avisoRecChuva"></div>
+<div class="secao">
+  <h3>🧠 Histórico Cérebro</h3>
+  <textarea id="historicoCerebro" rows="8" placeholder="Cole aqui o histórico completo com horários, números e cores..."></textarea>
+  <button onclick="enviarCerebro()">📤 Enviar Histórico</button>
+  <div id="mensagemCerebro" style="color:#8f8; margin-top:6px;"></div>
+  <div>Estratégias criadas: <span id="numEstrategias">0</span></div>
+</div>
+
+<div class="secao">
+  <h3>⏱️ Começar Análise</h3>
+  <textarea id="historicoAtual" rows="6" placeholder="Cole aqui as últimas jogadas para prever os brancos..."></textarea>
+  <button onclick="analisarAgora()">🔍 Analisar</button>
+  <div id="previsoes"></div>
+  <button onclick="mostrarMinutosQuentes()" style="margin-top:10px;">📈 Ver Minutos Quentes</button>
+  <div id="minutosQuentes" style="margin-top:10px; background:#222; padding:10px; border-radius:5px; max-height:150px; overflow:auto;"></div>
+</div>
+
+<div class="secao">
+  <h3>📊 Estatísticas</h3>
+  <div id="estatisticas" class="estatisticas"></div>
+  <button onclick="limparEstatisticas()">🧹 Limpar Estatísticas</button>
+</div>
+
+<div class="secao">
+  <h3>🧹 Limpar Histórico</h3>
+  <button onclick="limparHistorico()">🧼 Limpar Campos de Histórico</button>
+  <div id="mensagemHistorico" style="margin-top:10px;color:#8f8;"></div>
+</div>
