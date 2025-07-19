@@ -287,3 +287,10 @@ function mostrarPrevisoes(previsoes, avisoRecChuva){
 
   document.getElementById("avisoRecChuva").innerText = avisoRecChuva || "";
 }
+<script>
+  // Inicialização ao carregar a página
+  window.onload = () => {
+    atualizarEstatisticas();
+    atualizarContadorEstrategias();
+  };
+</script>
