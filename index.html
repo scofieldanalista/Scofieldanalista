@@ -115,3 +115,52 @@
   <button onclick="limparHistorico()">🧼 Limpar Campos de Histórico</button>
   <div id="mensagemHistorico" style="margin-top:10px;color:#8f8;"></div>
 </div>
+<script>
+// Constants para cores
+const VERMELHAS = new Set(['1','2','3','4','5','6','7']);
+const PRETAS = new Set(['8','9','10','11','12','13','14']);
+
+let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
+let historicosMemorizados = JSON.parse(localStorage.getItem("historicosMemorizados") || "[]");
+
+function atualizarContadorEstrategias(){
+  document.getElementById("numEstrategias").innerText = estrategias.length;
+}
+function salvarDados() {
+  localStorage.setItem("estrategias", JSON.stringify(estrategias));
+  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+  localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
+  atualizarEstatisticas();
+  atualizarContadorEstrategias();
+}
+function parsearHistorico(texto){
+  let linhas = texto.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+  let resultado = [];
+  for(let i=0; i<linhas.length;){
+    let num = linhas[i];
+    let proxLinha = linhas[i+1] || '';
+    if(/^\d{2}:\d{2}:\d{2}$/.test(num)){
+      i++;
+      continue;
+    }
+    if(/^\d{2}:\d{2}:\d{2}$/.test(proxLinha)){
+      let cor = 'branco';
+      if(num === '0' || num === ''){
+        cor = 'branco';
+        num = null;
+      } else if(VERMELHAS.has(num)){
+        cor = 'vermelha';
+      } else if(PRETAS.has(num)){
+        cor = 'preta';
+      } else {
+        cor = 'desconhecida';
+      }
+      resultado.push({num: num, hora: proxLinha, cor: cor});
+      i += 2;
+    } else {
+      i++;
+    }
+  }
+  return resultado;
+}
