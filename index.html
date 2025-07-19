@@ -207,3 +207,88 @@ function criarOuAtualizarEstrategias(historico) {
 
   return 0;
 }
+// Enviar histórico para criar estratégias
+function enviarCerebro() {
+  const texto = document.getElementById("historicoCerebro").value;
+  if (texto.trim().length < 10) {
+    alert("Histórico muito curto.");
+    return;
+  }
+  const parseado = parsearHistorico(texto);
+  if (parseado.length === 0) {
+    alert("Não foi possível interpretar o histórico.");
+    return;
+  }
+
+  historicosMemorizados.push({
+    data: Date.now(),
+    itens: parseado
+  });
+
+  const criadas = criarOuAtualizarEstrategias(parseado);
+  document.getElementById("mensagemCerebro").innerText = `✅ Histórico enviado! ${criadas} estratégia(s) criada(s).`;
+
+  salvarDados();
+}
+
+// Verifica se dois horários estão próximos (tolerância em segundos)
+function estaProximo(hora1, hora2, segundos = 60) {
+  let [h1, m1, s1] = hora1.split(':').map(Number);
+  let [h2, m2, s2] = hora2.split(':').map(Number);
+  let t1 = h1 * 3600 + m1 * 60 + s1;
+  let t2 = h2 * 3600 + m2 * 60 + s2;
+  return Math.abs(t1 - t2) <= segundos;
+}
+
+// Função principal de análise
+function analisarAgora() {
+  const textoAtual = document.getElementById("historicoAtual").value;
+  if (textoAtual.trim().length < 5) {
+    alert("Cole as últimas jogadas para analisar.");
+    return;
+  }
+  const parseadoAtual = parsearHistorico(textoAtual);
+  if (parseadoAtual.length === 0) {
+    alert("Não foi possível interpretar o histórico atual.");
+    return;
+  }
+
+  let estrategiasCompativeis = estrategias.filter(est => {
+    return est.horariosBrancos.some(hb => {
+      return parseadoAtual.some(item => item.cor === 'branco' && estaProximo(hb, item.hora, 60));
+    });
+  });
+
+  let previsoes = [];
+  let avisoRecChuva = "";
+
+  if (estrategiasCompativeis.length === 0) {
+    avisoRecChuva = "🔍 Nenhum padrão detectado. Previsão simples.";
+    let agora = new Date();
+    for (let i = 1; i <= 3; i++) {
+      let novaHora = new Date(agora.getTime() + i * 60000);
+      let h = novaHora.getHours().toString().padStart(2, '0');
+      let m = novaHora.getMinutes().toString().padStart(2, '0');
+      let s = novaHora.getSeconds().toString().padStart(2, '0');
+      previsoes.push({ horario: `${h}:${m}:${s}`, nivel: i === 1 ? "Forte" : i === 2 ? "Moderado" : "Arriscado" });
+    }
+  } else {
+    estrategiasCompativeis.sort((a, b) => b.peso - a.peso);
+    let melhor = estrategiasCompativeis[0];
+
+    let agoraSegundos = (() => {
+      let d = new Date();
+      return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+    })();
+
+    previsoes = melhor.horariosBrancos.filter(hb => {
+      let [h, m, s] = hb.split(':').map(Number);
+      let seg = h * 3600 + m * 60 + s;
+      return seg >= agoraSegundos;
+    }).map(hb => ({ horario: hb, nivel: "Forte" }));
+
+    avisoRecChuva = detectarRecOuChuva(parseadoAtual, melhor);
+  }
+
+  mostrarPrevisoes(previsoes, avisoRecChuva);
+}
