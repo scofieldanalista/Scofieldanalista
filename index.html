@@ -116,3 +116,70 @@
     <button onclick="limparHistorico()">🧼 Limpar Campos de Histórico</button>
     <div id="mensagemHistorico" style="margin-top:10px;color:#8f8;"></div>
   </div>
+// Cores por faixa numérica
+const VERMELHAS = new Set(['1','2','3','4','5','6','7']);
+const PRETAS = new Set(['8','9','10','11','12','13','14']);
+
+// Memória local
+let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
+let historicosMemorizados = JSON.parse(localStorage.getItem("historicosMemorizados") || "[]");
+
+// Atualiza contador de estratégias
+function atualizarContadorEstrategias() {
+  document.getElementById("numEstrategias").innerText = estrategias.length;
+}
+
+// Atualiza estatísticas na tela
+function atualizarEstatisticas() {
+  const div = document.getElementById("estatisticas");
+  if (estatisticas.length === 0) {
+    div.innerText = "Nenhuma estatística registrada.";
+    return;
+  }
+  let linhas = estatisticas.map(e => {
+    let status = e.acerto ? "✅" : "❌";
+    let d = new Date(e.data);
+    return `${e.horario} ${status} - ${d.toLocaleString()}`;
+  });
+  div.innerText = linhas.join('\n');
+}
+
+// Salvar memória local
+function salvarDados() {
+  localStorage.setItem("estrategias", JSON.stringify(estrategias));
+  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+  localStorage.setItem("historicosMemorizados", JSON.stringify(historicosMemorizados));
+  atualizarEstatisticas();
+  atualizarContadorEstrategias();
+}
+
+// 📌 Parseia o histórico colado (cérebro e análise)
+function parsearHistorico(texto) {
+  let linhas = texto.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+  let resultado = [];
+  for (let i = 0; i < linhas.length;) {
+    let num = linhas[i];
+    let hora = linhas[i + 1] || '';
+
+    if (/^\d{2}:\d{2}:\d{2}$/.test(hora)) {
+      let cor = 'branco';
+      if (num === '0' || num === '') {
+        cor = 'branco';
+        num = null;
+      } else if (VERMELHAS.has(num)) {
+        cor = 'vermelha';
+      } else if (PRETAS.has(num)) {
+        cor = 'preta';
+      } else {
+        cor = 'desconhecida';
+      }
+
+      resultado.push({ num: num, hora: hora, cor: cor });
+      i += 2;
+    } else {
+      i++;
+    }
+  }
+  return resultado;
+}
