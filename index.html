@@ -183,3 +183,76 @@ function parsearHistorico(texto) {
   }
   return resultado;
 }
+// Cria estratégias reais baseadas nos brancos do histórico
+function criarOuAtualizarEstrategias(historico) {
+  let brancos = historico.filter(e => e.cor === 'branco');
+
+  if (brancos.length === 0) return 0;
+
+  let novas = 0;
+
+  brancos.forEach((branco, index) => {
+    // Verifica se há anterior e posterior
+    const anterior = historico[index - 1];
+    const posterior = historico[index + 1];
+
+    if (!anterior || !posterior || !anterior.num || !posterior.num) return;
+
+    const soma = parseInt(anterior.num) + parseInt(posterior.num);
+    const minuto = branco.hora.slice(3, 5);
+
+    const padrao = {
+      anterior: anterior.num,
+      posterior: posterior.num,
+      soma: soma,
+      minuto: minuto,
+      horaCompleta: branco.hora
+    };
+
+    const jaExiste = estrategias.some(est => {
+      return (
+        est.soma === padrao.soma &&
+        est.minuto === padrao.minuto &&
+        est.anterior === padrao.anterior &&
+        est.posterior === padrao.posterior
+      );
+    });
+
+    if (!jaExiste) {
+      estrategias.push({
+        ...padrao,
+        peso: 1,
+        aprendidoEm: Date.now()
+      });
+      novas++;
+    }
+  });
+
+  return novas;
+}
+
+// Função chamada ao clicar em "📤 Enviar Histórico"
+function enviarCerebro() {
+  const texto = document.getElementById("historicoCerebro").value;
+  if (texto.trim().length < 10) {
+    alert("Histórico muito curto.");
+    return;
+  }
+
+  const parseado = parsearHistorico(texto);
+  if (parseado.length === 0) {
+    alert("Não foi possível interpretar o histórico.");
+    return;
+  }
+
+  historicosMemorizados.push({
+    data: Date.now(),
+    itens: parseado
+  });
+
+  const novas = criarOuAtualizarEstrategias(parseado);
+  document.getElementById("mensagemCerebro").innerText =
+    `✅ Histórico enviado! ${novas} estratégia(s) criada(s).`;
+
+  salvarDados();
+}
