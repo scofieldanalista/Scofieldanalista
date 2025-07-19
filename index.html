@@ -164,3 +164,126 @@ function parsearHistorico(texto){
   }
   return resultado;
 }
+function criarOuAtualizarEstrategias(historicoParseado){
+  let novosHorariosBranco = [];
+  historicoParseado.forEach(item => {
+    if(item.cor === 'branco'){
+      novosHorariosBranco.push(item.hora);
+    }
+  });
+  let novaEstrategia = {
+    id: Date.now(),
+    horariosBrancos: novosHorariosBranco,
+    criadoEm: Date.now(),
+    peso: 1
+  };
+  let igual = estrategias.some(est => {
+    if(est.horariosBrancos.length !== novaEstrategia.horariosBrancos.length) return false;
+    for(let i=0; i<est.horariosBrancos.length; i++){
+      if(est.horariosBrancos[i] !== novaEstrategia.horariosBrancos[i]) return false;
+    }
+    return true;
+  });
+  if(!igual){
+    estrategias.push(novaEstrategia);
+    return 1;
+  }
+  return 0;
+}
+
+function enviarCerebro(){
+  const texto = document.getElementById("historicoCerebro").value;
+  if(texto.trim().length < 10){
+    alert("Histórico muito curto.");
+    return;
+  }
+  const parseado = parsearHistorico(texto);
+  if(parseado.length === 0){
+    alert("Não foi possível interpretar o histórico.");
+    return;
+  }
+  historicosMemorizados.push({ data: Date.now(), itens: parseado });
+  const criadas = criarOuAtualizarEstrategias(parseado);
+  document.getElementById("mensagemCerebro").innerText = `✅ Histórico enviado com sucesso! ${criadas} estratégia(s) criada(s).`;
+  salvarDados();
+}
+
+function estaProximo(hora1, hora2, segundos=60){
+  let h1 = hora1.split(':').map(Number);
+  let h2 = hora2.split(':').map(Number);
+  let t1 = h1[0]*3600 + h1[1]*60 + h1[2];
+  let t2 = h2[0]*3600 + h2[1]*60 + h2[2];
+  return Math.abs(t1 - t2) <= segundos;
+}
+
+function analisarAgora(){
+  const textoAtual = document.getElementById("historicoAtual").value;
+  if(textoAtual.trim().length < 5){
+    alert("Cole as últimas jogadas para analisar.");
+    return;
+  }
+  const parseadoAtual = parsearHistorico(textoAtual);
+  if(parseadoAtual.length === 0){
+    alert("Não foi possível interpretar o histórico atual.");
+    return;
+  }
+
+  let estrategiasCompativeis = estrategias.filter(est => {
+    return est.horariosBrancos.some(hb => {
+      return parseadoAtual.some(item => item.cor === 'branco' && estaProximo(hb, item.hora, 60));
+    });
+  });
+
+  let previsoes = [];
+  let avisoRecChuva = "";
+
+  if(estrategiasCompativeis.length === 0){
+    avisoRecChuva = "🔍 Nenhum padrão detectado. Usando previsão simples.";
+    let agora = new Date();
+    for(let i=1; i<=3; i++){
+      let novaHora = new Date(agora.getTime() + i*60000);
+      let h = novaHora.getHours().toString().padStart(2,'0');
+      let m = novaHora.getMinutes().toString().padStart(2,'0');
+      let s = novaHora.getSeconds().toString().padStart(2,'0');
+      previsoes.push({ horario: `${h}:${m}:${s}`, nivel: i===1?"Forte":i===2?"Moderado":"Arriscado" });
+    }
+  } else {
+    estrategiasCompativeis.sort((a,b) => b.peso - a.peso);
+    let melhor = estrategiasCompativeis[0];
+
+    let agoraSegundos = (() => {
+      let d = new Date();
+      return d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
+    })();
+
+    previsoes = melhor.horariosBrancos.filter(hb => {
+      let partes = hb.split(':').map(Number);
+      let seg = partes[0]*3600 + partes[1]*60 + partes[2];
+      return seg >= agoraSegundos;
+    }).map(hb => ({horario: hb, nivel: "Forte"}));
+
+    avisoRecChuva = detectarRecOuChuva(parseadoAtual, melhor);
+  }
+
+  mostrarPrevisoes(previsoes, avisoRecChuva);
+}
+
+function mostrarPrevisoes(previsoes, avisoRecChuva){
+  const div = document.getElementById("previsoes");
+  div.innerHTML = "<h4>🟢 Brancos Prováveis:</h4>";
+  previsoes.forEach(p => {
+    let linha = document.createElement("div");
+    linha.innerHTML = `${p.horario} (${p.nivel}) 
+      <button onclick="registrarAcerto('${p.horario}')">✅ Acertou</button>
+      <button onclick="registrarErro('${p.horario}')">❌ Errou</button>`;
+    div.appendChild(linha);
+  });
+
+  if(previsoes.length > 0){
+    document.getElementById("proximaPrevisao").innerText = `Próxima previsão forte: ${previsoes[0].horario}`;
+  } else {
+    document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+  }
+
+  document.getElementById("avisoRecChuva").innerText = avisoRecChuva || "";
+}
