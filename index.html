@@ -256,3 +256,83 @@ function enviarCerebro() {
 
   salvarDados();
 }
+// Função chamada ao clicar no botão 🔍 Analisar
+function analisarAgora() {
+  const textoAtual = document.getElementById("historicoAtual").value;
+
+  if (textoAtual.trim().length < 5) {
+    alert("Cole as últimas jogadas para analisar.");
+    return;
+  }
+
+  const analisado = parsearHistorico(textoAtual);
+  if (analisado.length === 0) {
+    alert("Não foi possível interpretar o histórico atual.");
+    return;
+  }
+
+  const ultimos = analisado.slice(-3); // Pega as 3 últimas jogadas
+  if (ultimos.length < 3) {
+    alert("Forneça ao menos 3 resultados (anterior, branco, posterior).");
+    return;
+  }
+
+  const anterior = ultimos[0];
+  const branco = ultimos[1];
+  const posterior = ultimos[2];
+
+  if (!anterior.num || !posterior.num) {
+    alert("Informe números válidos para anterior e posterior.");
+    return;
+  }
+
+  const soma = parseInt(anterior.num) + parseInt(posterior.num);
+  const minutoAtual = branco.hora.slice(3, 5);
+
+  const correspondentes = estrategias.filter(est => {
+    return (
+      est.soma === soma &&
+      est.anterior === anterior.num &&
+      est.posterior === posterior.num
+    );
+  });
+
+  const horariosPrevisao = correspondentes.map(est => est.horaCompleta);
+
+  let aviso = "";
+  if (correspondentes.length === 0) {
+    aviso = "⚠️ Nenhum padrão semelhante encontrado. Possível REC.";
+  } else if (correspondentes.length >= 3) {
+    aviso = "🌧️ CHUVA de padrões semelhante detectada!";
+  }
+
+  mostrarPrevisoesInteligentes(horariosPrevisao, aviso);
+}
+
+// Mostra os horários previstos baseados em estratégias salvas
+function mostrarPrevisoesInteligentes(horarios, aviso = "") {
+  const div = document.getElementById("previsoes");
+  div.innerHTML = "<h4>🟢 Brancos Prováveis:</h4>";
+
+  if (horarios.length === 0) {
+    div.innerHTML += "<div>Nenhum horário previsto com base nos padrões.</div>";
+    document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+    document.getElementById("avisoRecChuva").innerText = aviso;
+    return;
+  }
+
+  horarios.sort();
+  horarios.forEach(h => {
+    let linha = document.createElement("div");
+    linha.innerHTML = `
+      ${h} (Forte)
+      <button onclick="registrarAcerto('${h}')">✅ Acertou</button>
+      <button onclick="registrarErro('${h}')">❌ Errou</button>
+    `;
+    div.appendChild(linha);
+  });
+
+  // Mostra no topo
+  document.getElementById("proximaPrevisao").innerText = `Próxima previsão forte: ${horarios[0]}`;
+  document.getElementById("avisoRecChuva").innerText = aviso;
+}
