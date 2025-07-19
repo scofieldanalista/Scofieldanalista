@@ -336,3 +336,51 @@ function mostrarPrevisoesInteligentes(horarios, aviso = "") {
   document.getElementById("proximaPrevisao").innerText = `Próxima previsão forte: ${horarios[0]}`;
   document.getElementById("avisoRecChuva").innerText = aviso;
 }
+// Estatísticas salvas (já inicializadas no topo)
+function registrarAcerto(horario) {
+  estatisticas.push({ horario: horario, acerto: true, data: Date.now() });
+  ajustarPesoEstrategia(horario, true);
+  salvarDados();
+  atualizarEstatisticas();
+}
+
+function registrarErro(horario) {
+  estatisticas.push({ horario: horario, acerto: false, data: Date.now() });
+  ajustarPesoEstrategia(horario, false);
+  salvarDados();
+  atualizarEstatisticas();
+}
+
+// Ajusta peso das estratégias com base no feedback
+function ajustarPesoEstrategia(horario, acertou) {
+  estrategias.forEach(est => {
+    if (est.horaCompleta === horario) {
+      est.peso = acertou ? est.peso + 1 : Math.max(1, est.peso - 1);
+    }
+  });
+}
+
+// Atualiza estatísticas no painel
+function atualizarEstatisticas() {
+  const div = document.getElementById("estatisticas");
+  if (estatisticas.length === 0) {
+    div.innerText = "Nenhuma estatística registrada.";
+    return;
+  }
+  let linhas = estatisticas.map(e => {
+    let status = e.acerto ? "✅" : "❌";
+    let d = new Date(e.data);
+    let dataStr = d.toLocaleString();
+    return `${e.horario} ${status} - ${dataStr}`;
+  });
+  div.innerText = linhas.join('\n');
+}
+
+// Limpa estatísticas salvas
+function limparEstatisticas() {
+  if (confirm("Deseja apagar todas as estatísticas?")) {
+    estatisticas = [];
+    salvarDados();
+    atualizarEstatisticas();
+  }
+}
