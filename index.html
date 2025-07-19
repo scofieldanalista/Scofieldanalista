@@ -76,3 +76,153 @@
     <button onclick="limparHistorico()">🧽 Limpar Campos de Histórico</button>
     <div id="mensagemHistorico" style="margin-top:10px;color:#8f8;"></div>
   </div>
+<script>
+let estrategias = JSON.parse(localStorage.getItem("estrategias") || "[]");
+let estatisticas = JSON.parse(localStorage.getItem("estatisticas") || "[]");
+
+// ⏳ Atualiza contador visível
+function atualizarContadorEstrategias() {
+  document.getElementById("contadorEstrategias").innerText =
+    `📚 Estratégias criadas: ${estrategias.length}`;
+}
+
+function salvarDados() {
+  localStorage.setItem("estrategias", JSON.stringify(estrategias));
+  localStorage.setItem("estatisticas", JSON.stringify(estatisticas));
+  atualizarEstatisticas();
+  atualizarContadorEstrategias();
+}
+
+function enviarCerebro() {
+  const texto = document.getElementById("historicoCerebro").value.trim();
+  if (texto.length < 10) return alert("Histórico muito curto.");
+
+  const linhas = texto.split("\n").filter(l => l.trim() !== "");
+  let novaCriada = false;
+
+  for (let i = 2; i < linhas.length; i += 3) {
+    const anterior = parseInt(linhas[i - 2]);
+    const posterior = parseInt(linhas[i]);
+    const horario = linhas[i - 1];
+    const soma = anterior + posterior;
+    const estrategiaExistente = estrategias.find(e => e.soma === soma);
+
+    if (!estrategiaExistente && !isNaN(soma)) {
+      estrategias.push({
+        tipo: "soma",
+        soma: soma,
+        origem: "HistóricoCérebro",
+        horarios: [horario],
+        peso: 1
+      });
+      novaCriada = true;
+    }
+  }
+
+  document.getElementById("mensagemCerebro").innerText = novaCriada
+    ? "✅ Histórico analisado com sucesso! Estratégias atualizadas."
+    : "✅ Histórico analisado. Nenhuma nova estratégia identificada.";
+
+  salvarDados();
+}
+
+function analisarAgora() {
+  const texto = document.getElementById("historicoAtual").value.trim();
+  const linhas = texto.split("\n").filter(l => l.trim() !== "");
+  if (linhas.length < 3) return alert("Histórico muito curto.");
+
+  let horariosPrevistos = [];
+  estrategias.forEach(estrategia => {
+    if (estrategia.tipo === "soma") {
+      for (let i = 2; i < linhas.length; i += 3) {
+        const anterior = parseInt(linhas[i - 2]);
+        const posterior = parseInt(linhas[i]);
+        const horario = linhas[i - 1];
+        const soma = anterior + posterior;
+        if (soma === estrategia.soma) {
+          horariosPrevistos.push({ horario, nivel: calcularNivel(estrategia.peso), estrategia });
+        }
+      }
+    }
+  });
+
+  const div = document.getElementById("previsoes");
+  div.innerHTML = horariosPrevistos.length
+    ? `<h4>🟢 Brancos Prováveis:</h4>`
+    : `<h4>❌ Nenhuma previsão baseada em estratégias aprendidas.</h4>`;
+
+  horariosPrevistos.forEach(p => {
+    const sinalDiv = document.createElement("div");
+    sinalDiv.className = "sinal";
+    sinalDiv.innerHTML = `
+      <strong>${p.horario}</strong> (${p.nivel})<br>
+      Estratégia: Soma = ${p.estrategia.soma}<br>
+      <button onclick="registrarResultado('${p.horario}', 'win', ${p.estrategia.soma})">✅ Acertou</button>
+      <button onclick="registrarResultado('${p.horario}', 'loss', ${p.estrategia.soma})">❌ Errou</button>
+    `;
+    div.appendChild(sinalDiv);
+  });
+
+  if (horariosPrevistos.length === 0) {
+    const agora = new Date();
+    for (let i = 1; i <= 3; i++) {
+      const t = new Date(agora.getTime() + i * 60000);
+      horariosPrevistos.push({
+        horario: `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}:${t.getSeconds().toString().padStart(2, '0')}`,
+        nivel: i === 1 ? "Forte" : i === 2 ? "Moderado" : "Arriscado",
+        estrategia: { soma: "Desconhecida" }
+      });
+    }
+    div.innerHTML = `<h4>🔍 Nenhuma estratégia. Usando previsão simples:</h4>`;
+    horariosPrevistos.forEach(p => {
+      const sinalDiv = document.createElement("div");
+      sinalDiv.className = "sinal";
+      sinalDiv.innerHTML = `
+        <strong>${p.horario}</strong> (${p.nivel})<br>
+        <button onclick="registrarResultado('${p.horario}', 'win', -1)">✅ Acertou</button>
+        <button onclick="registrarResultado('${p.horario}', 'loss', -1)">❌ Errou</button>
+      `;
+      div.appendChild(sinalDiv);
+    });
+  }
+}
+
+function calcularNivel(peso) {
+  return peso >= 3 ? "Forte" : peso === 2 ? "Moderado" : "Arriscado";
+}
+
+function registrarResultado(horario, resultado, soma) {
+  estatisticas.push({ horario, resultado: resultado === 'win' ? '✅' : '❌' });
+  const estrategia = estrategias.find(e => e.soma === soma);
+  if (estrategia) {
+    if (resultado === 'win') estrategia.peso++;
+    else estrategia.peso = Math.max(1, estrategia.peso - 1);
+  }
+  salvarDados();
+}
+
+function atualizarEstatisticas() {
+  const div = document.getElementById("estatisticas");
+  div.innerText = estatisticas.map(e => `${e.horario} ${e.resultado}`).reverse().join("\n");
+}
+
+function limparEstatisticas() {
+  if (confirm("Tem certeza que deseja apagar as estatísticas?")) {
+    estatisticas = [];
+    salvarDados();
+  }
+}
+
+function limparHistorico() {
+  document.getElementById("historicoCerebro").value = "";
+  document.getElementById("historicoAtual").value = "";
+  document.getElementById("mensagemCerebro").innerText = "";
+  document.getElementById("previsoes").innerHTML = "";
+  document.getElementById("mensagemHistorico").innerText = "✅ Campos de histórico limpos! Estratégias mantidas.";
+}
+
+atualizarEstatisticas();
+atualizarContadorEstrategias();
+</script>
+</body>
+</html>
