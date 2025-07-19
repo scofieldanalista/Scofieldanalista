@@ -3,175 +3,117 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Scofield Analista V5 - Previsão em Tempo Real</title>
+<title>Scofield Analista - Previsão de Brancos Blaze</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background:#111; color:#eee;
-    margin:0; padding:20px;
-    text-align:center;
-  }
-  h1 {
-    color:#00ffcc;
-    margin-bottom:15px;
-  }
-  textarea, input {
-    width: 90%;
-    max-width: 450px;
-    padding: 8px;
-    margin: 8px 0;
-    border-radius: 6px;
-    border:none;
-    background:#222;
-    color:#eee;
-    font-family: monospace;
-    font-size: 14px;
-  }
-  button {
-    background:#00ffcc;
-    border:none;
-    border-radius:6px;
-    padding:10px 20px;
-    margin:8px 5px 15px 5px;
-    font-weight:bold;
-    cursor:pointer;
-    color:#000;
-    transition: background 0.3s ease;
-  }
-  button:hover {
-    background:#00bfa5;
-    color:#fff;
-  }
-  .block-container {
-    display:flex;
-    justify-content:center;
-    gap:15px;
-    margin:20px 0;
-  }
-  .block {
-    width: 80px;
-    height: 80px;
-    border-radius:10px;
-    font-weight:bold;
-    font-size:20px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    color:#111;
-    user-select:none;
-    box-shadow: 0 0 6px rgba(0,0,0,0.4);
-  }
-  .vermelho { background:#e53935; color:#fff;}
-  .preto { background:#212121; color:#fff;}
-  .branco { background:#fff; color:#111;}
-  #resultado {
-    margin-top: 20px;
-    font-size: 18px;
-    font-weight: bold;
-    min-height: 40px;
-    max-width: 450px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 10px;
-    background: #222;
-    border-radius: 8px;
-    color: #00ffcc;
-  }
-  #listaPrevisoes {
-    max-width: 450px;
-    margin: 20px auto 0 auto;
-    text-align: left;
-    background: #222;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 15px;
-    color: #ccc;
-    min-height: 80px;
-  }
-  #feedbackBtns button {
-    background:#007bff;
-    color:#fff;
-    margin-top: 10px;
-  }
-  #feedbackBtns button:hover {
-    background:#0056b3;
+  body { font-family: Arial, sans-serif; background: #121212; color: #eee; padding: 20px; }
+  textarea { width: 100%; height: 160px; font-family: monospace; font-size: 14px; background: #222; color: #eee; border: none; padding: 10px; border-radius: 5px; }
+  button { padding: 10px 20px; margin: 10px 5px 20px 0; background: #0088ff; border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; }
+  button:hover { background: #005fcc; }
+  .resultado { font-size: 16px; margin-top: 10px; font-weight: bold; }
+  #listaPrevisoes { white-space: pre-line; background: #222; padding: 15px; border-radius: 5px; min-height: 120px; }
+  .block { display: inline-block; width: 60px; height: 60px; line-height: 60px; text-align: center; font-weight: bold; font-size: 24px; margin: 0 10px 10px 0; border-radius: 6px; user-select: none; }
+  .vermelho { background: #c62828; color: #fff; }
+  .preto { background: #212121; color: #fff; border: 1px solid #555; }
+  .branco { background: #eee; color: #333; border: 1px solid #aaa; }
+  #pedraAnterior, #pedraPosterior { margin-bottom: 10px; }
+  label { display: block; margin-top: 10px; }
+  input[type="text"], input[type="time"], input[type="number"] {
+    width: 100px; padding: 5px; margin-top: 4px; border-radius: 4px; border: 1px solid #555; background: #222; color: #eee;
   }
 </style>
 </head>
 <body>
 
-<h1>🔍 Scofield Analista V5 - Previsão Real</h1>
+<h1>Scofield Analista - Previsão de Brancos Blaze</h1>
 
-<div>
-  <textarea id="historico" placeholder="Cole o histórico da Blaze (número e horário). Exemplo:\n1\n00:00:05\n3\n00:00:10\nbranco\n00:00:15\n7\n00:00:20\n"></textarea><br>
-  <button onclick="analisarHistorico()">Analisar Histórico</button>
-  <button onclick="limparHistorico()">Limpar Histórico</button>
+<textarea id="historico" placeholder="Cole aqui o histórico da Blaze no formato:\nNúmero\nHorário\nNúmero\nHorário\n... (linhas alternadas)\nLinhas em branco ou só horário indicam branco.\nExemplo:\n14\n17:33:08\n6\n17:32:38\n\n17:32:08\n8\n17:31:38\n..."></textarea>
+
+<br />
+<button onclick="analisarHistorico()">Analisar Histórico</button>
+<button onclick="limparHistorico()">Limpar Histórico</button>
+
+<div class="resultado" id="resultado"></div>
+
+<hr />
+
+<h2>Informar padrão manual (Pedra Anterior / Branco / Pedra Posterior)</h2>
+
+<div id="pedraAnterior">
+  <div class="block vermelho" id="blocoAnterior">?</div>
+  <label>Número Pedra Anterior:
+    <input type="number" id="numeroAnterior" min="1" max="14" placeholder="1-14" />
+  </label>
+  <label>Horário Pedra Anterior (HH:MM:SS):
+    <input type="text" id="horarioAnterior" placeholder="17:33:08" pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$" />
+  </label>
 </div>
 
-<h2>Informe um padrão manual</h2>
-<div class="block-container">
-  <div id="blocoAnterior" class="block branco">?</div>
-  <div class="block branco" style="font-size: 32px;">🎲</div>
-  <div id="blocoPosterior" class="block branco">?</div>
+<div id="pedraBranco" style="margin:10px 0;">
+  <div class="block branco" style="display:inline-block; width: 60px; height: 60px; line-height: 60px; text-align:center; font-weight:bold; font-size: 28px; margin: 0 10px 10px 0; border-radius: 6px; user-select:none;">🎲</div>
+  <label>Horário Branco (HH:MM:SS):
+    <input type="text" id="horarioBranco" placeholder="17:33:38" pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$" />
+  </label>
 </div>
 
-<div>
-  <input id="anterior" type="text" placeholder="Número anterior / horário (ex: 5/00:01:15)" />
-  <input id="posterior" type="text" placeholder="Número posterior / horário (ex: 9/00:01:18)" />
-  <input id="branco" type="text" placeholder="Horário do branco (ex: 00:01:20)" />
-  <button onclick="analisarPadrao()">Analisar padrão</button>
+<div id="pedraPosterior">
+  <div class="block preto" id="blocoPosterior">?</div>
+  <label>Número Pedra Posterior:
+    <input type="number" id="numeroPosterior" min="1" max="14" placeholder="1-14" />
+  </label>
+  <label>Horário Pedra Posterior (HH:MM:SS):
+    <input type="text" id="horarioPosterior" placeholder="17:34:08" pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$" />
+  </label>
 </div>
 
-<div id="resultado"></div>
+<button onclick="analisarPadraoManual()">Analisar Padrão</button>
 
-<h3>Próximos minutos prováveis para branco:</h3>
+<hr />
+
+<h2>Próximos minutos prováveis para branco</h2>
 <div id="listaPrevisoes">Previsão será exibida aqui após análise.</div>
 
-<div id="feedbackBtns">
-  <button onclick="registrarResultado(true)">✅ Acertou</button>
-  <button onclick="registrarResultado(false)">❌ Errou</button>
-</div>
+<hr />
+
+<button onclick="registrarResultado(true)">Acertou ✅</button>
+<button onclick="registrarResultado(false)">Errou ❌</button>
 
 <script>
   let estrategias = [];
   let ultimaAnalise = null;
-  let pesoMaximo = 10;
-  let pesoMinimo = 0;
+  const pesoMaximo = 5;
+  const pesoMinimo = 0.1;
 
   function corDaPedra(numero) {
-    if (!numero || isNaN(numero)) return 'branco';
+    if(!numero) return "branco";
     numero = parseInt(numero);
-    if (numero >= 1 && numero <= 7) return 'vermelho';
-    if (numero >= 8 && numero <= 14) return 'preto';
-    return 'branco';
+    if(numero >= 1 && numero <= 7) return "vermelho";
+    if(numero >= 8 && numero <= 14) return "preto";
+    return "branco";
   }
-  function atualizarBlocos() {
-    const anterior = document.getElementById("anterior").value.split('/')[0];
-    const posterior = document.getElementById("posterior").value.split('/')[0];
-    const blocoAnterior = document.getElementById("blocoAnterior");
-    const blocoPosterior = document.getElementById("blocoPosterior");
-    blocoAnterior.className = "block " + corDaPedra(anterior);
-    blocoAnterior.textContent = anterior || "?";
-    blocoPosterior.className = "block " + corDaPedra(posterior);
-    blocoPosterior.textContent = posterior || "?";
-  }
-  document.getElementById("anterior").addEventListener("input", atualizarBlocos);
-  document.getElementById("posterior").addEventListener("input", atualizarBlocos);
 
   function horarioParaSegundos(horario) {
     if(!horario) return null;
-    const partes = horario.split(":").map(Number);
-    if(partes.length !== 3) return null;
-    return partes[0]*3600 + partes[1]*60 + partes[2];
+    const partes = horario.split(':');
+    if(partes.length < 2) return null;
+    let h = parseInt(partes[0]) || 0;
+    let m = parseInt(partes[1]) || 0;
+    let s = partes.length === 3 ? parseInt(partes[2]) || 0 : 0;
+    return h*3600 + m*60 + s;
   }
 
   function segundosParaHorario(segundos) {
-    if (segundos === null) return "??:??:??";
-    segundos = segundos % 86400; // Ajustar para um dia só
+    segundos = segundos % 86400; // mod 24h
     let h = Math.floor(segundos / 3600);
     let m = Math.floor((segundos % 3600) / 60);
     let s = segundos % 60;
-    return [h,m,s].map(x => x.toString().padStart(2,'0')).join(":");
+    return [h,m,s].map(v => v.toString().padStart(2,'0')).join(':');
+  }
+
+  function faixaHoraria(segundos) {
+    // Dividir dia em 3 faixas para melhorar previsões: madrugada, dia e noite
+    if(segundos < 21600) return "madrugada"; // 00:00 - 06:00
+    if(segundos < 64800) return "dia";       // 06:00 - 18:00
+    return "noite";                          // 18:00 - 00:00
   }
 
   function analisarHistorico() {
@@ -180,45 +122,49 @@
       alert("Cole o histórico antes de analisar.");
       return;
     }
-    const linhas = texto.split('\n');
+    const linhas = texto.split('\n').map(l => l.trim()).filter(l => l !== '');
+
     let registros = [];
     let brancosCount = 0;
-    for(let i=0; i<linhas.length; i++) {
-      let linha = linhas[i].trim();
-      if(!linha) continue;
-      let numero = null;
-      let horario = null;
-      let numeroEncontrado = linha.match(/\d+/);
-      if(numeroEncontrado) {
-        numero = numeroEncontrado[0];
-        if(i+1 < linhas.length && linhas[i+1].match(/\d{2}:\d{2}:\d{2}/)) {
-          horario = linhas[i+1].trim();
-          i++;
-        }
-      } else {
-        if(linha.toLowerCase().includes('branco') || linha === '') {
-          numero = null;
-          horario = (i+1 < linhas.length && linhas[i+1].match(/\d{2}:\d{2}:\d{2}/)) ? linhas[i+1].trim() : null;
-          i += horario ? 1 : 0;
-          brancosCount++;
-        } else if(linha.match(/\d{2}:\d{2}:\d{2}/)) {
-          numero = null;
-          horario = linha;
-          brancosCount++;
-        } else {
-          continue;
-        }
+
+    for(let i = 0; i < linhas.length; i++) {
+      let numeroLinha = linhas[i];
+      let horarioLinha = (i+1 < linhas.length) ? linhas[i+1] : null;
+
+      let numero = parseInt(numeroLinha);
+      let horario = horarioLinha && horarioLinha.match(/^\d{1,2}:\d{2}:\d{2}$/) ? horarioLinha : null;
+
+      if(!isNaN(numero) && horario) {
+        registros.push({
+          numero: numero.toString(),
+          horario,
+          cor: corDaPedra(numero),
+          segundos: horarioParaSegundos(horario)
+        });
+        i++; // pula a linha do horário
+      } else if(horario && horario.match(/^\d{1,2}:\d{2}:\d{2}$/) && (isNaN(numero) || numeroLinha === '')) {
+        registros.push({
+          numero: null,
+          horario,
+          cor: "branco",
+          segundos: horarioParaSegundos(horario)
+        });
+        brancosCount++;
+        i++; // pula horário
+      } else if(!isNaN(numero) && !horario) {
+        registros.push({
+          numero: numero.toString(),
+          horario: null,
+          cor: corDaPedra(numero),
+          segundos: null
+        });
       }
-      registros.push({
-        numero,
-        horario,
-        cor: corDaPedra(numero),
-        segundos: horarioParaSegundos(horario)
-      });
     }
+
     if(brancosCount === 0) {
       alert("⚠️ Atenção: Nenhum branco detectado no histórico. Verifique o formato dos dados colados.");
     }
+
     gerarEstrategias(registros);
     document.getElementById("resultado").style.color = "#00ffcc";
     document.getElementById("resultado").textContent = `✅ Histórico analisado com sucesso! Brancos detectados: ${brancosCount}`;
@@ -228,92 +174,137 @@
 
   function gerarEstrategias(registros) {
     estrategias = [];
-    for(let i=1; i < registros.length - 1; i++) {
-      if(registros[i].cor === 'branco' && registros[i].segundos !== null) {
-        let anterior = registros[i-1];
-        let posterior = registros[i+1];
-        if(anterior && posterior && anterior.segundos !== null && posterior.segundos !== null) {
-          let soma = (parseInt(anterior.numero)||0) + (parseInt(posterior.numero)||0);
-          let intervalo = Math.abs(registros[i].segundos - anterior.segundos);
-          let horario = registros[i].segundos;
-          let faixa = faixaHoraria(horario);
-          let existente = estrategias.find(e => 
-            e.soma === soma &&
-            Math.abs(e.intervalo - intervalo) <= 5 &&
-            e.faixa === faixa
-          );
-          if(existente) {
-            existente.peso = Math.min(pesoMaximo, existente.peso + 0.1);
-            existente.contagem++;
-          } else {
-            estrategias.push({
-              soma,
-              intervalo,
-              horario,
-              peso: 3,
-              contagem: 1,
-              acertos: 0,
-              erros: 0,
-              faixa
-            });
-          }
-        }
-      }
+    // Estratégia: analisar intervalos entre brancos e somas anteriores/posteriores
+
+    // Filtrar só os brancos com horário e índice
+    let brancos = registros
+      .map((r,i) => ({...r, idx: i}))
+      .filter(r => r.cor === "branco" && r.segundos !== null);
+
+    if(brancos.length < 2) return;
+
+    for(let i=1; i<brancos.length; i++) {
+      let atual = brancos[i];
+      let anterior = brancos[i-1];
+
+      // Intervalo em segundos entre brancos
+      let intervalo = atual.segundos - anterior.segundos;
+      if(intervalo < 0) intervalo += 86400; // ajustar para dia seguinte
+
+      // Soma dos números anterior e posterior do branco atual (se existirem)
+      let idxAnterior = atual.idx - 1;
+      let idxPosterior = atual.idx + 1;
+      let soma = 0;
+      if(idxAnterior >= 0 && registros[idxAnterior].numero) soma += parseInt(registros[idxAnterior].numero);
+      if(idxPosterior < registros.length && registros[idxPosterior].numero) soma += parseInt(registros[idxPosterior].numero);
+
+      // Peso inicial da estratégia
+      let peso = 3;
+
+      // Faixa horária para contexto
+      let faixa = faixaHoraria(atual.segundos);
+
+      estrategias.push({
+        intervalo,
+        soma,
+        peso,
+        faixa,
+        horario: atual.segundos,
+        acertos: 0,
+        erros: 0
+      });
     }
   }
 
-  function faixaHoraria(segundos) {
-    if(segundos === null) return "desconhecido";
-    let h = Math.floor(segundos/3600);
-    if(h < 12) return "manhã";
-    else if(h < 18) return "tarde";
-    else return "noite";
-  }
+  function analisarPadraoManual() {
+    let numAnt = document.getElementById("numeroAnterior").value.trim();
+    let horaAnt = document.getElementById("horarioAnterior").value.trim();
+    let horaBranco = document.getElementById("horarioBranco").value.trim();
+    let numPos = document.getElementById("numeroPosterior").value.trim();
+    let horaPos = document.getElementById("horarioPosterior").value.trim();
 
-  function analisarPadrao() {
-    const anteriorRaw = document.getElementById("anterior").value.trim();
-    const posteriorRaw = document.getElementById("posterior").value.trim();
-    const brancoRaw = document.getElementById("branco").value.trim();
-    if(!anteriorRaw || !posteriorRaw || !brancoRaw) {
-      alert("Preencha todos os campos corretamente.");
+    if(!horaBranco.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
+      alert("Informe o horário do branco corretamente (HH:MM:SS).");
       return;
     }
-    const anteriorParts = anteriorRaw.split('/');
-    const posteriorParts = posteriorRaw.split('/');
-    if(anteriorParts.length !== 2 || posteriorParts.length !== 2) {
-      alert("Preencha número e horário separados por /, ex: 5/00:01:15");
+    if(numAnt !== "" && (isNaN(numAnt) || numAnt < 1 || numAnt > 14)) {
+      alert("Número da pedra anterior inválido.");
       return;
     }
-    const numAnterior = parseInt(anteriorParts[0]);
-    const horaAnterior = anteriorParts[1];
-    const numPosterior = parseInt(posteriorParts[0]);
-    const horaPosterior = posteriorParts[1];
-    const horaBranco = brancoRaw;
-    if(isNaN(numAnterior) || isNaN(numPosterior)) {
-      alert("Números anteriores e posteriores inválidos.");
+    if(numPos !== "" && (isNaN(numPos) || numPos < 1 || numPos > 14)) {
+      alert("Número da pedra posterior inválido.");
       return;
     }
-    const somaAtual = numAnterior + numPosterior;
-    const intervaloAtual = Math.abs(horarioParaSegundos(horaBranco) - horarioParaSegundos(horaAnterior));
-    const faixaAtual = faixaHoraria(horarioParaSegundos(horaBranco));
-    let encontradas = estrategias.filter(e => 
-      e.soma === somaAtual &&
-      Math.abs(e.intervalo - intervaloAtual) <= 5 &&
-      e.faixa === faixaAtual
-    );
+    if(horaAnt !== "" && !horaAnt.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
+      alert("Horário da pedra anterior inválido.");
+      return;
+    }
+    if(horaPos !== "" && !horaPos.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
+      alert("Horário da pedra posterior inválido.");
+      return;
+    }
+
+    // Atualizar blocos visuais
+    let blocoAnt = document.getElementById("blocoAnterior");
+    let blocoPos = document.getElementById("blocoPosterior");
+
+    if(numAnt) {
+      blocoAnt.textContent = numAnt;
+      blocoAnt.className = corDaPedra(numAnt);
+    } else {
+      blocoAnt.textContent = "?";
+      blocoAnt.className = "branco";
+    }
+    if(numPos) {
+      blocoPos.textContent = numPos;
+      blocoPos.className = corDaPedra(numPos);
+    } else {
+      blocoPos.textContent = "?";
+      blocoPos.className = "branco";
+    }
+
+    // Converter horários para segundos
+    let segAnt = horaAnt ? horarioParaSegundos(horaAnt) : null;
+    let segBranco = horarioParaSegundos(horaBranco);
+    let segPos = horaPos ? horarioParaSegundos(horaPos) : null;
+
+    // Analisar padrão manual e tentar achar estratégias parecidas no histórico
+    if(!estrategias || estrategias.length === 0) {
+      alert("Analise o histórico primeiro para gerar estratégias.");
+      return;
+    }
+
+    // Filtrar estratégias que combinem com a faixa horária do branco manual
+    let faixa = faixaHoraria(segBranco);
+    let similares = estrategias.filter(e => e.faixa === faixa);
+
+    if(similares.length === 0) {
+      document.getElementById("listaPrevisoes").textContent = "Nenhuma estratégia encontrada para essa faixa horária.";
+      return;
+    }
+
+    // Pesos baseados na soma fornecida manualmente (anterior + posterior)
+    let somaManual = 0;
+    if(numAnt) somaManual += parseInt(numAnt);
+    if(numPos) somaManual += parseInt(numPos);
+
+    // Comparar com estratégias com soma próxima (±3)
+    let encontradas = similares.filter(e => Math.abs(e.soma - somaManual) <= 3);
+
     if(encontradas.length === 0) {
-      document.getElementById("resultado").style.color = "#ffbb33";
-      document.getElementById("resultado").textContent = "⚠️ Nenhum padrão exato encontrado. Aguardar novo histórico.";
-      ultimaAnalise = null;
+      document.getElementById("listaPrevisoes").textContent = "Nenhuma estratégia próxima encontrada.";
       return;
     }
-    let pesoTotal = 0;
-    encontradas.forEach(e => pesoTotal += e.peso);
-    let pesoMedio = pesoTotal / encontradas.length;
-    let texto = `📌 Padrão identificado! Peso médio: ${pesoMedio.toFixed(2)}. `;
-    if(pesoMedio >= 4) texto += "💪 Sinal forte para branco!";
-    else if(pesoMedio >= 2) texto += "⚠️ Sinal médio, aposte com cautela.";
-    else texto += "❗ Sinal arriscado, prefira aguardar.";
+
+    // Calcular peso médio das estratégias encontradas
+    let pesoMedio = encontradas.reduce((acc,e) => acc + e.peso, 0) / encontradas.length;
+
+    // Mostrar resultado com força do sinal
+    let texto = "";
+    if(pesoMedio >= 4) texto = "✅ Sinal forte para branco!";
+    else if(pesoMedio >= 2) texto = "⚠️ Sinal médio, aposte com cautela.";
+    else texto = "❗ Sinal arriscado, prefira aguardar.";
+
     document.getElementById("resultado").style.color = pesoMedio >= 4 ? "#00ff00" : pesoMedio >= 2 ? "#ffbb33" : "#ff4444";
     document.getElementById("resultado").textContent = texto;
     ultimaAnalise = encontradas;
@@ -326,11 +317,9 @@
       container.textContent = "Cole o histórico e analise para gerar previsões.";
       return;
     }
-    // Pegar horário atual em segundos
     let agora = new Date();
     let segundosAgora = agora.getHours()*3600 + agora.getMinutes()*60 + agora.getSeconds();
 
-    // Filtrar estratégias com peso bom e que ocorrem em faixa horária atual
     let faixaAtual = faixaHoraria(segundosAgora);
 
     let possiveis = estrategias.filter(e => 
@@ -342,30 +331,19 @@
       return;
     }
 
-    // Para cada estratégia, prever próximo horário aproximado somando intervalo ao último horário conhecido
-    // Ex: se estratégia indica intervalo de 12 segundos, e último branco foi às 00:01:15, próximo deve sair +/- 00:01:27
-    // Aqui vamos usar horário da estratégia + múltiplos de intervalo que estejam próximos do horário atual
-
-    // Buscar próximas janelas dentro de +/- 300 segundos (5 minutos) do horário atual
     let proximosMinutos = [];
 
     possiveis.forEach(e => {
-      // calcular próxima possível saída somando intervalos múltiplos até ultrapassar agora
       let intervalo = e.intervalo;
       let baseHorario = e.horario;
       let diff = segundosAgora - baseHorario;
       let multiplo = Math.ceil(diff / intervalo);
       if(multiplo < 1) multiplo = 1;
-      let proximoHorario = baseHorario + multiplo*intervalo;
+      let proximoHorario = (baseHorario + multiplo*intervalo) % 86400;
 
-      // Ajustar para um dia (mod 86400)
-      proximoHorario = proximoHorario % 86400;
-
-      // Calcular diferença entre agora e próximo horário
       let segundosAteProximo = proximoHorario - segundosAgora;
       if(segundosAteProximo < 0) segundosAteProximo += 86400;
 
-      // Considerar só próximos em até 10 minutos
       if(segundosAteProximo <= 600) {
         proximosMinutos.push({
           horario: proximoHorario,
@@ -381,13 +359,11 @@
       return;
     }
 
-    // Ordenar por peso decrescente e horário crescente
     proximosMinutos.sort((a,b) => {
       if(b.peso !== a.peso) return b.peso - a.peso;
       return a.horario - b.horario;
     });
 
-    // Exibir top 5 previsões
     let exibicao = proximosMinutos.slice(0,5).map(p => {
       return `⏰ ${segundosParaHorario(p.horario)} (peso: ${p.peso.toFixed(2)}, soma: ${p.soma}, intervalo: ${p.intervalo}s)`;
     }).join('\n');
@@ -406,24 +382,21 @@
         e.peso = Math.min(pesoMaximo, e.peso + 0.5);
       } else {
         e.erros = (e.erros || 0) + 1;
-        e.peso = Math.max(pesoMinimo, e.peso - 0.7);
+        e.peso = Math.max(pesoMinimo, e.peso - 0.5);
       }
     });
-    alert(acertou ? "✅ Resultado registrado como ACERTO!" : "❌ Resultado registrado como ERRO.");
+    alert(acertou ? "Resultado registrado como ACERTO!" : "Resultado registrado como ERRO.");
     mostrarPrevisoes();
   }
 
   function limparHistorico() {
-    if(confirm("Deseja realmente limpar todo o histórico e estratégias salvas?")) {
+    if(confirm("Tem certeza que deseja limpar o histórico e resetar as análises?")) {
       document.getElementById("historico").value = "";
-      document.getElementById("resultado").textContent = "";
-      document.getElementById("listaPrevisoes").textContent = "Previsão será exibida aqui após análise.";
       estrategias = [];
       ultimaAnalise = null;
-      document.getElementById("blocoAnterior").className = "block branco";
-      document.getElementById("blocoAnterior").textContent = "?";
-      document.getElementById("blocoPosterior").className = "block branco";
-      document.getElementById("blocoPosterior").textContent = "?";
+      document.getElementById("resultado").textContent = "";
+      document.getElementById("listaPrevisoes").textContent = "Previsão será exibida aqui após análise.";
+      alert("Histórico limpo com sucesso.");
     }
   }
 </script>
