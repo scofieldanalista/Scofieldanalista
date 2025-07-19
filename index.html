@@ -292,3 +292,89 @@ function analisarAgora() {
 
   mostrarPrevisoes(previsoes, avisoRecChuva);
 }
+  // Mostrar as previsões no DOM
+  function mostrarPrevisoes(previsoes, avisoRecChuva){
+    const div = document.getElementById("previsoes");
+    div.innerHTML = "<h4>🟢 Brancos Prováveis:</h4>";
+    previsoes.forEach(p => {
+      let linha = document.createElement("div");
+      linha.style.marginBottom = "5px";
+
+      linha.innerHTML = `
+        ${p.horario} (${p.nivel})
+        <button onclick="registrarAcerto('${p.horario}')">✅ Acertou</button>
+        <button onclick="registrarErro('${p.horario}')">❌ Errou</button>
+      `;
+      div.appendChild(linha);
+    });
+
+    // Atualiza o aviso automático do próximo forte no topo
+    if(previsoes.length > 0){
+      document.getElementById("proximaPrevisao").innerText = `Próxima previsão forte: ${previsoes[0].horario}`;
+    } else {
+      document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+    }
+
+    // Aviso REC/CHUVA
+    document.getElementById("avisoRecChuva").innerText = avisoRecChuva || "";
+  }
+
+  // Registrar acerto para a estratégia associada ao horário
+  function registrarAcerto(horario){
+    estatisticas.push({ horario: horario, acerto: true, data: Date.now() });
+    ajustarPesoEstrategia(horario, true);
+    salvarDados();
+    atualizarEstatisticas();
+  }
+
+  // Registrar erro para a estratégia associada ao horário
+  function registrarErro(horario){
+    estatisticas.push({ horario: horario, acerto: false, data: Date.now() });
+    ajustarPesoEstrategia(horario, false);
+    salvarDados();
+    atualizarEstatisticas();
+  }
+
+  // Ajusta o peso da estratégia que contém o horário
+  function ajustarPesoEstrategia(horario, acertou){
+    estrategias.forEach(est => {
+      if(est.horariosBrancos.includes(horario)){
+        if(acertou) est.peso += 1;
+        else est.peso = Math.max(1, est.peso - 1);
+      }
+    });
+  }
+
+  // Atualiza as estatísticas na tela
+  function atualizarEstatisticas(){
+    const div = document.getElementById("estatisticas");
+    if(estatisticas.length === 0){
+      div.innerText = "Nenhuma estatística registrada.";
+      return;
+    }
+    let linhas = estatisticas.map(e => {
+      let status = e.acerto ? "✅" : "❌";
+      let d = new Date(e.data);
+      let dataStr = d.toLocaleString();
+      return `${e.horario} ${status} - ${dataStr}`;
+    });
+    div.innerText = linhas.join('\n');
+  }
+
+  // Limpar estatísticas
+  function limparEstatisticas(){
+    estatisticas = [];
+    salvarDados();
+    atualizarEstatisticas();
+  }
+
+  // Limpar campos de histórico e mensagens
+  function limparHistorico(){
+    document.getElementById("historicoCerebro").value = "";
+    document.getElementById("historicoAtual").value = "";
+    document.getElementById("mensagemCerebro").innerText = "";
+    document.getElementById("mensagemHistorico").innerText = "✅ Campos de histórico limpos!";
+    document.getElementById("previsoes").innerHTML = "";
+    document.getElementById("avisoRecChuva").innerText = "";
+    document.getElementById("proximaPrevisao").innerText = "Próxima previsão forte: --:--:--";
+  }
