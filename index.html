@@ -256,6 +256,7 @@
     return `${hh}:${mm}`;
   }
 
+  // Corrigida a função para somar minutos com precisão exata
   function somarMinutos(horaStr, minutosSomar) {
     const base = parseTimeHM(horaStr);
     if (!base) return null;
@@ -313,67 +314,73 @@
 
   // Atualiza todas listas e stats
   function atualizarTodasListas() {
-    ['atual', 'proxima', 'seguinte', 'estrat2'].forEach(renderLista);
-    atualizarStats('atual');
-    atualizarStats('proxima');
-    atualizarStats('seguinte');
-    atualizarStats('estrat2');
+    ['atual','proxima','seguinte','estrat2'].forEach(nome => {
+      renderLista(nome);
+      atualizarStats(nome);
+    });
   }
 
-  // Atualiza barra e texto de estatísticas
   function atualizarStats(nomeLista) {
     const stat = stats[nomeLista];
-    let win = stat.win;
-    let loss = stat.loss;
-    let total = win + loss;
-    let perc = total === 0 ? 0 : Math.round((win/total)*100);
-
-    let progressFillId = '';
-    let statsTextId = '';
-
-    switch(nomeLista) {
-      case 'atual': progressFillId = 'progressAtu'; statsTextId = 'statsAtu'; break;
-      case 'proxima': progressFillId = 'progressProx'; statsTextId = 'statsProx'; break;
-      case 'seguinte': progressFillId = 'progressSeg'; statsTextId = 'statsSeg'; break;
-      case 'estrat2': progressFillId = 'progressE2'; statsTextId = 'statsE2'; break;
-    }
-    document.getElementById(progressFillId).style.width = perc + '%';
-    document.getElementById(statsTextId).textContent = `${win} win | ${loss} loss`;
+    const total = stat.win + stat.loss;
+    let perc = total === 0 ? 0 : Math.round((stat.win / total) * 100);
+    document.getElementById('stats'+capitalize(nomeLista)).innerText = `${stat.win} win | ${stat.loss} loss`;
+    document.getElementById('progress'+capitalizeAbrev(nomeLista)).style.width = perc + '%';
+  }
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  function capitalizeAbrev(str) {
+    if(str==='atual') return 'Atu';
+    if(str==='proxima') return 'Prox';
+    if(str==='seguinte') return 'Seg';
+    if(str==='estrat2') return 'E2';
+    return str;
   }
 
   // --- Estratégia 1 ---
   function estrat1Analisar() {
-    const num1 = parseInt(document.getElementById('num1').value) || 0;
-    const num2 = parseInt(document.getElementById('num2').value) || 0; // branco sempre 0
-    const num3 = parseInt(document.getElementById('num3').value) || 0;
+    const num1 = parseInt(document.getElementById('num1').value);
+    const hora1 = document.getElementById('hora1').value;
+    const num2 = 0; // branco fixo
+    const hora2 = document.getElementById('hora2').value;
+    const num3 = parseInt(document.getElementById('num3').value);
+    const hora3 = document.getElementById('hora3').value;
 
-    const hora1 = document.getElementById('hora1').value.trim();
-    const hora2 = document.getElementById('hora2').value.trim();
-    const hora3 = document.getElementById('hora3').value.trim();
-
-    if(!parseTimeHM(hora1) || !parseTimeHM(hora2) || !parseTimeHM(hora3)) {
-      alert('Por favor, insira horários válidos no formato HH:MM.');
+    if( isNaN(num1) || isNaN(num3) || !parseTimeHM(hora1) || !parseTimeHM(hora2) || !parseTimeHM(hora3) ) {
+      alert('Preencha todos os números e horários válidos para Pedra Anterior, Branco e Pedra Posterior.');
       return;
     }
 
-    const somaDigitosHora1 = somarDigitos(hora1);
-    const somaDigitosHora2 = somarDigitos(hora2);
-    const somaDigitosHora3 = somarDigitos(hora3);
-    const somaHorarios = somaDigitosHora1 + somaDigitosHora2 + somaDigitosHora3;
+    // Soma dos dígitos dos horários
+    const somaHorarios = somarDigitos(hora1) + somarDigitos(hora2) + somarDigitos(hora3);
+
+    // Soma das pedras (num1 + num3)
     const somaPedras = num1 + num3;
+
+    // Total geral
     const total = somaHorarios + somaPedras;
 
+    // Cálculo correto do horário previsto somando o total de minutos ao horário do branco
     const horarioPrevisto = somarMinutos(hora2, total);
+    if(!horarioPrevisto) {
+      alert('Erro ao calcular horário previsto. Verifique os horários.');
+      return;
+    }
 
-    document.getElementById('resultado').innerHTML = `
-      🔎 Soma dos dígitos horários: ${somaDigitosHora1} + ${somaDigitosHora2} + ${somaDigitosHora3} = <b>${somaHorarios}</b><br/>
-      🪨 Soma das pedras (anterior + posterior): ${num1} + ${num3} = <b>${somaPedras}</b><br/><br/>
+    // Mostrar resultado na tela
+    const resultadoDiv = document.getElementById('resultado');
+    resultadoDiv.innerHTML = `
+      Pedra anterior: ${num1} (${hora1})<br/>
+      Pedra posterior: ${num3} (${hora3})<br/>
+      Soma dos dígitos dos horários: <b>${somaHorarios}</b><br/>
+      Soma das pedras (anterior + posterior): ${num1} + ${num3} = <b>${somaPedras}</b><br/><br/>
       ✅ <b>Total geral (horários + pedras): ${total}</b><br/>
       ⏰ Horário previsto (branco + total minutos): <b>${horarioPrevisto}</b><br/>
       ✔️ Adicionado à lista Horário Atual
     `;
 
-    // Evitar duplicados
+    // Evitar duplicados na lista atual
     if(!listaAtual.find(e => e.time === horarioPrevisto)) {
       listaAtual.push({time: horarioPrevisto});
       atualizarTodasListas();
@@ -425,7 +432,7 @@
   }
 
   function limparLista(nomeLista) {
-    if(confirm(`Deseja limpar a lista "${nomeLista.charAt(0).toUpperCase() + nomeLista.slice(1)}"?`)) {
+    if(confirm(`Deseja limpar a lista "${capitalize(nomeLista)}"?`)) {
       if(nomeLista === 'atual') {
         listaAtual = [];
         stats.atual.win = 0; stats.atual.loss = 0;
@@ -454,7 +461,7 @@
     const base = parseTimeHM(brancoStr);
     listaEstrat2 = [];
 
-    // Vamos gerar 20 previsões contando 6 pedras (3 minutos) de cada vez
+    // Gerar 20 previsões contando 6 pedras (3 minutos) de cada vez
     for(let i=1; i<=20; i++) {
       let minutosSomar = i * 3;
       let h = base.h;
