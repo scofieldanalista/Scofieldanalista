@@ -31,6 +31,8 @@
     margin-top: 5px;
     border-radius: 6px;
     border: none;
+    background: #333;
+    color: #fff;
   }
   .quadrados {
     display: flex;
@@ -181,7 +183,7 @@
       <input type="text" id="hora3" placeholder="22:03" maxlength="5" />
     </div>
   </div>
-  <button onclick="estrat1Analisar()">Analisar Estratégia 1</button>
+  <button id="btnAnalizarEstrat1">Analisar Estratégia 1</button>
 
   <div id="resultado"></div>
 
@@ -221,7 +223,7 @@
   <h2>Estratégia 2 - Contagem de 6 em 6 pedras</h2>
   <label>Informe o horário do branco (HH:MM):</label>
   <input type="text" id="estrat2_branco" placeholder="Ex: 12:06" maxlength="5" />
-  <button onclick="estrat2Gerar()">Gerar Lista Estratégia 2</button>
+  <button id="btnGerarEstrat2">Gerar Lista Estratégia 2</button>
 
   <div class="lista-container" style="margin-top:10px;">
     <div class="lista-header">
@@ -236,28 +238,23 @@
 
 <script>
   // --- Helpers ---
-
-  // Soma os dígitos de um horário string "HH:MM"
   function somarDigitos(str) {
     return str.replace(/:/g, '').split('').reduce((acc, val) => acc + parseInt(val), 0);
   }
 
-  // Parse horário HH:MM para {h, m}
   function parseTimeHM(hm) {
-    if(!hm || !hm.match(/^\d{1,2}:\d{2}$/)) return null;
+    if(!hm || !hm.match(/^\\d{1,2}:\\d{2}$/)) return null;
     const [h,m] = hm.split(':').map(Number);
     if(h<0 || h>23 || m<0 || m>59) return null;
     return {h,m};
   }
 
-  // Formata hora e minuto para "HH:MM"
   function timeToStr(h,m) {
     const hh = h.toString().padStart(2,'0');
     const mm = m.toString().padStart(2,'0');
     return `${hh}:${mm}`;
   }
 
-  // Soma minutos a um horário HH:MM e retorna novo horário HH:MM
   function somarMinutos(horaStr, minutosSomar) {
     const base = parseTimeHM(horaStr);
     if (!base) return null;
@@ -269,7 +266,7 @@
     return timeToStr(h, m);
   }
 
-  // --- Dados e Listas ---
+  // --- Dados e listas ---
   let listaAtual = [];
   let listaProxima = [];
   let listaSeguinte = [];
@@ -292,7 +289,6 @@
       case 'estrat2': ul = document.getElementById('estrat2-list'); arr = listaEstrat2; break;
       default: return;
     }
-    // Ordena por horário crescente
     arr.sort((a,b)=>{
       const tA = parseTimeHM(a.time);
       const tB = parseTimeHM(b.time);
@@ -306,135 +302,4 @@
       const li = document.createElement('li');
       li.innerHTML = `<span class="time">${item.time}</span>
         <div class="buttons">
-          <button onclick="marcarWin('${nomeLista}', '${item.time}')">Win</button>
-          <button onclick="marcarLoss('${nomeLista}', '${item.time}')">Loss</button>
-        </div>
-      `;
-      ul.appendChild(li);
-    }
-  }
-
-  // Atualiza todas listas no DOM e stats
-  function atualizarTodasListas() {
-    renderLista('atual');
-    renderLista('proxima');
-    renderLista('seguinte');
-    renderLista('estrat2');
-    atualizarStats('atual');
-    atualizarStats('proxima');
-    atualizarStats('seguinte');
-    atualizarStats('estrat2');
-  }
-
-  // Atualiza barra e texto de estatísticas
-  function atualizarStats(nomeLista) {
-    const stat = stats[nomeLista];
-    let win = stat.win;
-    let loss = stat.loss;
-    let total = win + loss;
-    let perc = total === 0 ? 0 : Math.round((win/total)*100);
-
-    let progressFillId = '';
-    let statsTextId = '';
-
-    switch(nomeLista) {
-      case 'atual': progressFillId = 'progressAtu'; statsTextId = 'statsAtu'; break;
-      case 'proxima': progressFillId = 'progressProx'; statsTextId = 'statsProx'; break;
-      case 'seguinte': progressFillId = 'progressSeg'; statsTextId = 'statsSeg'; break;
-      case 'estrat2': progressFillId = 'progressE2'; statsTextId = 'statsE2'; break;
-    }
-    document.getElementById(progressFillId).style.width = perc + '%';
-    document.getElementById(statsTextId).textContent = `${win} win | ${loss} loss`;
-  }
-
-  // --- Estratégia 1 ---
-  function estrat1Analisar() {
-    const num1 = parseInt(document.getElementById('num1').value) || 0;
-    const num2 = parseInt(document.getElementById('num2').value) || 0; // branco (fixo zero)
-    const num3 = parseInt(document.getElementById('num3').value) || 0;
-
-    const hora1 = document.getElementById('hora1').value || "";
-    const hora2 = document.getElementById('hora2').value || "";
-    const hora3 = document.getElementById('hora3').value || "";
-
-    if(!parseTimeHM(hora1) || !parseTimeHM(hora2) || !parseTimeHM(hora3)) {
-      alert('Por favor, insira horários válidos no formato HH:MM.');
-      return;
-    }
-
-    const somaDigitosHora1 = somarDigitos(hora1);
-    const somaDigitosHora2 = somarDigitos(hora2);
-    const somaDigitosHora3 = somarDigitos(hora3);
-    const somaHorarios = somaDigitosHora1 + somaDigitosHora2 + somaDigitosHora3;
-    const somaPedras = num1 + num3;
-    const total = somaHorarios + somaPedras;
-
-    const horarioPrevisto = somarMinutos(hora2, total);
-
-    document.getElementById('resultado').innerHTML = `
-      🔎 Soma dos dígitos horários: ${somaDigitosHora1} + ${somaDigitosHora2} + ${somaDigitosHora3} = <b>${somaHorarios}</b><br/>
-      🪨 Soma das pedras (anterior + posterior): ${num1} + ${num3} = <b>${somaPedras}</b><br/><br/>
-      ✅ <b>Total geral (horários + pedras): ${total}</b><br/>
-      ⏰ Horário previsto (branco + total minutos): <b>${horarioPrevisto}</b><br/>
-      ✔️ Adicionado à lista Horário Atual
-    `;
-
-    if(!listaAtual.find(e => e.time === horarioPrevisto)) {
-      listaAtual.push({time: horarioPrevisto});
-    }
-    atualizarTodasListas();
-  }
-
-  // Função para mover horários ao clicar em loss
-  function marcarLoss(nomeLista, time) {
-    stats[nomeLista].loss++;
-
-    if(nomeLista === 'atual') {
-      const base = parseTimeHM(time);
-      if(base) {
-        const proxHora = (base.h + 1) % 24;
-        const seguHora = (base.h + 2) % 24;
-        const proxTime = timeToStr(proxHora, base.m);
-        const seguTime = timeToStr(seguHora, base.m);
-
-        if(!listaProxima.find(e => e.time === proxTime)) listaProxima.push({time: proxTime});
-        if(!listaSeguinte.find(e => e.time === seguTime)) listaSeguinte.push({time: seguTime});
-      }
-    }
-    else if(nomeLista === 'proxima') {
-      const base = parseTimeHM(time);
-      if(base) {
-        const seguHora = (base.h + 1) % 24;
-        const seguTime = timeToStr(seguHora, base.m);
-        if(!listaSeguinte.find(e => e.time === seguTime)) listaSeguinte.push({time: seguTime});
-      }
-    }
-    removerItemDaLista(nomeLista, time);
-    atualizarStats(nomeLista);
-  }
-
-  // Função para marcar win (acertou)
-  function marcarWin(nomeLista, time) {
-    stats[nomeLista].win++;
-    removerItemDaLista(nomeLista, time);
-    atualizarStats(nomeLista);
-  }
-
-  // Remove item da lista
-  function removerItemDaLista(nomeLista, time) {
-    let lista;
-    if(nomeLista === 'atual') lista = listaAtual;
-    else if(nomeLista === 'proxima') lista = listaProxima;
-    else if(nomeLista === 'seguinte') lista = listaSeguinte;
-    else if(nomeLista === 'estrat2') lista = listaEstrat2;
-    else return;
-
-    const idx = lista.findIndex(e => e.time === time);
-    if(idx !== -1) lista.splice(idx, 1);
-
-    atualizarTodasListas();
-  }
-
-  // Limpa lista e reseta estatísticas
-  function limparLista(nomeLista) {
-    if(confirm(`Deseja limpar a lista "${nomeLista.charAt(0).toUpper
+          <button onclick="mar
