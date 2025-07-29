@@ -302,4 +302,176 @@
       const li = document.createElement('li');
       li.innerHTML = `<span class="time">${item.time}</span>
         <div class="buttons">
-          <button onclick="mar
+          <button onclick="marcarWin('${nomeLista}', '${item.time}')">Win</button>
+          <button onclick="marcarLoss('${nomeLista}', '${item.time}')">Loss</button>
+        </div>
+      `;
+      ul.appendChild(li);
+    }
+  }
+
+  // Atualiza todas listas e stats
+  function atualizarTodasListas() {
+    ['atual', 'proxima', 'seguinte', 'estrat2'].forEach(renderLista);
+    atualizarStats('atual');
+    atualizarStats('proxima');
+    atualizarStats('seguinte');
+    atualizarStats('estrat2');
+  }
+
+  // Atualiza barra e texto de estatísticas
+  function atualizarStats(nomeLista) {
+    const stat = stats[nomeLista];
+    let win = stat.win;
+    let loss = stat.loss;
+    let total = win + loss;
+    let perc = total === 0 ? 0 : Math.round((win/total)*100);
+
+    let progressFillId = '';
+    let statsTextId = '';
+
+    switch(nomeLista) {
+      case 'atual': progressFillId = 'progressAtu'; statsTextId = 'statsAtu'; break;
+      case 'proxima': progressFillId = 'progressProx'; statsTextId = 'statsProx'; break;
+      case 'seguinte': progressFillId = 'progressSeg'; statsTextId = 'statsSeg'; break;
+      case 'estrat2': progressFillId = 'progressE2'; statsTextId = 'statsE2'; break;
+    }
+    document.getElementById(progressFillId).style.width = perc + '%';
+    document.getElementById(statsTextId).textContent = `${win} win | ${loss} loss`;
+  }
+
+  // --- Estratégia 1 ---
+  function estrat1Analisar() {
+    const num1 = parseInt(document.getElementById('num1').value) || 0;
+    const num2 = parseInt(document.getElementById('num2').value) || 0; // branco sempre 0
+    const num3 = parseInt(document.getElementById('num3').value) || 0;
+
+    const hora1 = document.getElementById('hora1').value.trim();
+    const hora2 = document.getElementById('hora2').value.trim();
+    const hora3 = document.getElementById('hora3').value.trim();
+
+    if(!parseTimeHM(hora1) || !parseTimeHM(hora2) || !parseTimeHM(hora3)) {
+      alert('Por favor, insira horários válidos no formato HH:MM.');
+      return;
+    }
+
+    const somaDigitosHora1 = somarDigitos(hora1);
+    const somaDigitosHora2 = somarDigitos(hora2);
+    const somaDigitosHora3 = somarDigitos(hora3);
+    const somaHorarios = somaDigitosHora1 + somaDigitosHora2 + somaDigitosHora3;
+    const somaPedras = num1 + num3;
+    const total = somaHorarios + somaPedras;
+
+    const horarioPrevisto = somarMinutos(hora2, total);
+
+    document.getElementById('resultado').innerHTML = `
+      🔎 Soma dos dígitos horários: ${somaDigitosHora1} + ${somaDigitosHora2} + ${somaDigitosHora3} = <b>${somaHorarios}</b><br/>
+      🪨 Soma das pedras (anterior + posterior): ${num1} + ${num3} = <b>${somaPedras}</b><br/><br/>
+      ✅ <b>Total geral (horários + pedras): ${total}</b><br/>
+      ⏰ Horário previsto (branco + total minutos): <b>${horarioPrevisto}</b><br/>
+      ✔️ Adicionado à lista Horário Atual
+    `;
+
+    if(!listaAtual.find(e => e.time === horarioPrevisto)) {
+      listaAtual.push({time: horarioPrevisto});
+    }
+    atualizarTodasListas();
+  }
+
+  // --- Marcar Win/Loss ---
+  function marcarWin(nomeLista, time) {
+    stats[nomeLista].win++;
+    removerItemDaLista(nomeLista, time);
+    atualizarStats(nomeLista);
+  }
+
+  function marcarLoss(nomeLista, time) {
+    stats[nomeLista].loss++;
+
+    if(nomeLista === 'atual') {
+      const base = parseTimeHM(time);
+      if(base) {
+        const proxHora = (base.h + 1) % 24;
+        const seguHora = (base.h + 2) % 24;
+        const proxTime = timeToStr(proxHora, base.m);
+        const seguTime = timeToStr(seguHora, base.m);
+        if(!listaProxima.find(e => e.time === proxTime)) listaProxima.push({time: proxTime});
+        if(!listaSeguinte.find(e => e.time === seguTime)) listaSeguinte.push({time: seguTime});
+      }
+    } else if(nomeLista === 'proxima') {
+      const base = parseTimeHM(time);
+      if(base) {
+        const seguHora = (base.h + 1) % 24;
+        const seguTime = timeToStr(seguHora, base.m);
+        if(!listaSeguinte.find(e => e.time === seguTime)) listaSeguinte.push({time: seguTime});
+      }
+    }
+    removerItemDaLista(nomeLista, time);
+    atualizarTodasListas();
+  }
+
+  function removerItemDaLista(nomeLista, time) {
+    let lista;
+    if(nomeLista === 'atual') lista = listaAtual;
+    else if(nomeLista === 'proxima') lista = listaProxima;
+    else if(nomeLista === 'seguinte') lista = listaSeguinte;
+    else if(nomeLista === 'estrat2') lista = listaEstrat2;
+    else return;
+
+    const idx = lista.findIndex(e => e.time === time);
+    if(idx !== -1) lista.splice(idx, 1);
+  }
+
+  function limparLista(nomeLista) {
+    if(confirm(`Deseja limpar a lista "${nomeLista.charAt(0).toUpperCase() + nomeLista.slice(1)}"?`)) {
+      if(nomeLista === 'atual') {
+        listaAtual = [];
+        stats.atual.win = 0; stats.atual.loss = 0;
+      } else if(nomeLista === 'proxima') {
+        listaProxima = [];
+        stats.proxima.win = 0; stats.proxima.loss = 0;
+      } else if(nomeLista === 'seguinte') {
+        listaSeguinte = [];
+        stats.seguinte.win = 0; stats.seguinte.loss = 0;
+      } else if(nomeLista === 'estrat2') {
+        listaEstrat2 = [];
+        stats.estrat2.win = 0; stats.estrat2.loss = 0;
+      }
+      atualizarTodasListas();
+    }
+  }
+
+  // --- Estratégia 2 ---
+  function estrat2Gerar() {
+    const brancoStr = document.getElementById('estrat2_branco').value.trim();
+    if(!parseTimeHM(brancoStr)) {
+      alert('Insira um horário válido (HH:MM) para o branco.');
+      return;
+    }
+
+    const base = parseTimeHM(brancoStr);
+    listaEstrat2 = [];
+
+    // Vamos gerar 20 previsões contando 6 pedras (3 minutos) de cada vez
+    for(let i=1; i<=20; i++) {
+      let minutosSomar = i * 3;
+      let h = base.h;
+      let m = base.m + minutosSomar;
+      h += Math.floor(m / 60);
+      m = m % 60;
+      h = h % 24;
+      listaEstrat2.push({time: timeToStr(h,m)});
+    }
+    atualizarTodasListas();
+  }
+
+  // Eventos
+  document.getElementById('btnAnalizarEstrat1').onclick = estrat1Analisar;
+  document.getElementById('btnGerarEstrat2').onclick = estrat2Gerar;
+
+  // Inicializa listas
+  atualizarTodasListas();
+</script>
+
+</body>
+</html>
